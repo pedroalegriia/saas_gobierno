@@ -11,8 +11,8 @@ Angular base e infraestructura Docker para continuar el desarrollo por modulos.
 
 - Backend: Laravel 12, PHP 8.4+, MySQL 8, Sanctum, Queues, Notifications,
   Events, Policies, API Resources, Form Requests y PHPUnit.
-- Frontend: Angular 20, Angular Material, RxJS, Signals, Standalone
-  Components, Routing, JWT, PWA y diseno Mobile First.
+- Frontend: Angular 20, Angular Material, Tailwind CSS, RxJS, Signals,
+  Standalone Components, Routing, JWT, PWA y diseno Mobile First.
 - Infraestructura: Docker, Nginx, Redis y Supervisor.
 
 ## Estructura
@@ -29,6 +29,7 @@ infra/          Docker, Nginx y Supervisor
 - [Arquitectura](docs/architecture.md)
 - [Modelo de datos y diagrama ER](docs/database.md)
 - [OpenAPI](docs/openapi.yaml)
+- [Guia UI/UX corporativa](docs/ui-ux-guidelines.md)
 
 ## Fases sugeridas
 

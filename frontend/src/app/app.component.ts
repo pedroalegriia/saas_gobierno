@@ -8,17 +8,25 @@ import { TenantService } from './core/services/tenant.service';
   selector: 'app-root',
   imports: [MatButtonModule, MatToolbarModule, RouterLink, RouterOutlet],
   template: `
-    <mat-toolbar class="app-toolbar" [style.--tenant-primary]="primaryColor()" [style.--tenant-secondary]="secondaryColor()">
-      <a routerLink="/" class="brand">
-        <span class="brand-mark">MX</span>
-        <span>
-          <strong>{{ tenantName() }}</strong>
-          <small>Pagos en linea</small>
-        </span>
-      </a>
-      <span class="spacer"></span>
-      <a mat-button routerLink="/recibos">Recibos</a>
-      <a mat-flat-button routerLink="/login">Tesoreria</a>
+    <mat-toolbar
+      class="app-toolbar"
+      [style.--tenant-primary]="primaryColor()"
+      [style.--tenant-secondary]="secondaryColor()"
+    >
+      <div class="toolbar-shell">
+        <a routerLink="/" class="brand">
+          <span class="brand-mark">MX</span>
+          <span class="brand-copy">
+            <strong>{{ tenantName() }}</strong>
+            <small>Plataforma segura de pagos municipales</small>
+          </span>
+        </a>
+
+        <nav class="nav-actions" aria-label="Navegacion principal">
+          <a mat-button routerLink="/recibos">Recibos</a>
+          <a mat-flat-button class="treasury-cta" routerLink="/login">Tesoreria</a>
+        </nav>
+      </div>
     </mat-toolbar>
 
     <router-outlet />
@@ -30,37 +38,83 @@ import { TenantService } from './core/services/tenant.service';
         --tenant-secondary: var(--color-secondary);
         position: sticky;
         top: 0;
-        z-index: 10;
-        background: var(--tenant-primary);
+        z-index: 40;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(15, 76, 129, 0.88);
         color: #fff;
-        min-height: 72px;
-        padding: 0 16px;
+        min-height: 78px;
+        padding: 0;
+        backdrop-filter: blur(18px);
+      }
+
+      .toolbar-shell {
+        display: flex;
+        width: min(1180px, calc(100% - 24px));
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 auto;
+        gap: 14px;
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
         gap: 12px;
+        min-width: 0;
       }
 
       .brand-mark {
         display: grid;
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
         place-items: center;
-        border-radius: 14px;
-        background: var(--tenant-secondary);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--tenant-secondary), rgba(255, 255, 255, 0.26));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16);
         font-weight: 800;
       }
 
-      .brand small {
+      .brand-copy {
+        display: grid;
+        min-width: 0;
+      }
+
+      .brand-copy strong {
+        overflow: hidden;
+        max-width: 42vw;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .brand-copy small {
         display: block;
         opacity: 0.82;
         font-size: 0.76rem;
       }
 
-      .spacer {
-        flex: 1 1 auto;
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .treasury-cta {
+        border-radius: 999px;
+        background: #fff !important;
+        color: var(--tenant-primary) !important;
+        font-weight: 800;
+      }
+
+      @media (max-width: 640px) {
+        .brand-copy small {
+          display: none;
+        }
+
+        .nav-actions a:first-child {
+          display: none;
+        }
       }
     `,
   ],
