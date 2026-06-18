@@ -30,6 +30,13 @@ final readonly class TenantResolver
             }
         }
 
+        if ($this->isLocalHost($normalizedHost)) {
+            $municipality = $this->municipalities->findActiveBySlug((string) config('domain.local_tenant_slug', 'colima'));
+            if ($municipality !== null) {
+                return $municipality;
+            }
+        }
+
         throw TenantNotFoundException::forHost($host);
     }
 
@@ -43,5 +50,10 @@ final readonly class TenantResolver
         $candidate = substr($host, 0, -strlen('.' . $baseDomain));
 
         return $candidate !== '' && ! str_contains($candidate, '.') ? $candidate : null;
+    }
+
+    private function isLocalHost(string $host): bool
+    {
+        return in_array($host, ['localhost', '127.0.0.1', '::1'], true);
     }
 }

@@ -79,6 +79,15 @@ DB_PORT=3306
 DB_DATABASE=saas_gobierno
 DB_USERNAME=root
 DB_PASSWORD=
+LOCAL_TENANT_SLUG=colima
+```
+
+En local, las peticiones hechas desde `localhost` se resuelven al municipio demo
+configurado en `LOCAL_TENANT_SLUG`. Con los seeders puedes probar tesoreria con:
+
+```text
+Email: tesoreria@colima.gob.mx
+Password: password
 ```
 
 ### Frontend
