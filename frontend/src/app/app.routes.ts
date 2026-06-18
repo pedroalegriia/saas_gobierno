@@ -25,7 +25,34 @@ export const routes: Routes = [
   {
     path: 'tesoreria',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/treasury/treasury-dashboard.page').then((m) => m.TreasuryDashboardPage),
+    loadComponent: () => import('./features/treasury/treasury-shell.page').then((m) => m.TreasuryShellPage),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'resumen',
+      },
+      {
+        path: 'resumen',
+        loadComponent: () => import('./features/treasury/treasury-dashboard.page').then((m) => m.TreasuryDashboardPage),
+      },
+      {
+        path: 'lineas-captura',
+        loadComponent: () => import('./features/treasury/treasury-capture-lines.page').then((m) => m.TreasuryCaptureLinesPage),
+      },
+      {
+        path: 'pagos',
+        loadComponent: () => import('./features/treasury/treasury-payments.page').then((m) => m.TreasuryPaymentsPage),
+      },
+      {
+        path: 'adeudos',
+        loadComponent: () => import('./features/treasury/treasury-debts.page').then((m) => m.TreasuryDebtsPage),
+      },
+      {
+        path: 'recibos',
+        loadComponent: () => import('./features/treasury/treasury-receipts.page').then((m) => m.TreasuryReceiptsPage),
+      },
+    ],
   },
   {
     path: '**',
