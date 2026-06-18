@@ -4,6 +4,8 @@
 
 backend/vendor/
 backend/.env
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitkeep
 backend/storage/*.key
 backend/storage/app/*
 backend/storage/framework/cache/*
