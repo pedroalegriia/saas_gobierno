@@ -12,6 +12,7 @@ return [
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
     'providers' => [
+        Illuminate\Filesystem\FilesystemServiceProvider::class,
         App\Providers\AppServiceProvider::class,
         App\Providers\DomainServiceProvider::class,
         App\Providers\EventServiceProvider::class,

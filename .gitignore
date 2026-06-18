@@ -8,6 +8,10 @@ backend/bootstrap/cache/*
 !backend/bootstrap/cache/.gitkeep
 backend/storage/*.key
 backend/storage/app/*
+!backend/storage/app/private/
+!backend/storage/app/private/.gitkeep
+!backend/storage/app/public/
+!backend/storage/app/public/.gitkeep
 backend/storage/framework/cache/*
 backend/storage/framework/sessions/*
 backend/storage/framework/views/*
