@@ -12,6 +12,7 @@ final class DatabaseSeeder extends Seeder
             MunicipalitySeeder::class,
             UserSeeder::class,
             ServiceAccountSeeder::class,
+            DemoTreasuryDashboardSeeder::class,
         ]);
     }
 }

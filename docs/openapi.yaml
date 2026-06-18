@@ -306,12 +306,71 @@ components:
     TreasuryDashboard:
       type: object
       properties:
+        municipality_id: { type: integer }
         kpis:
           type: object
           properties:
-            daily_revenue: { type: number, format: float }
-            monthly_revenue: { type: number, format: float }
-            predial_collected: { type: number, format: float }
-            water_collected: { type: number, format: float }
-            fines_collected: { type: number, format: float }
+            daily_revenue: { type: string, example: "$11,950.00" }
+            monthly_revenue: { type: string, example: "$26,015.00" }
+            predial_collected: { type: string, example: "$22,480.00" }
+            water_collected: { type: string, example: "$2,070.00" }
+            fines_collected: { type: string, example: "$1,865.00" }
             pending_payments: { type: integer }
+        charts:
+          type: object
+          properties:
+            revenue_by_day:
+              type: array
+              items:
+                $ref: "#/components/schemas/RevenuePoint"
+            revenue_by_month:
+              type: array
+              items:
+                $ref: "#/components/schemas/RevenueMonth"
+            distribution_by_service:
+              type: array
+              items:
+                $ref: "#/components/schemas/ServiceDistribution"
+        tables:
+          type: object
+          properties:
+            latest_payments:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardRow"
+            recent_debts:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardRow"
+            issued_receipts:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardRow"
+    RevenuePoint:
+      type: object
+      properties:
+        label: { type: string, example: "18 Jun" }
+        date: { type: string, format: date }
+        amount: { type: number, format: float }
+    RevenueMonth:
+      type: object
+      properties:
+        label: { type: string, example: "Jun 2026" }
+        month: { type: string, example: "2026-06" }
+        amount: { type: number, format: float }
+    ServiceDistribution:
+      type: object
+      properties:
+        service_type: { type: string, enum: [PREDIAL, WATER, TRAFFIC_FINE] }
+        label: { type: string }
+        amount: { type: number, format: float }
+        percentage: { type: integer }
+    DashboardRow:
+      type: object
+      properties:
+        icon: { type: string }
+        title: { type: string }
+        subtitle: { type: string }
+        amount: { type: string, example: "$1,700.00" }
+        status: { type: string }
+        reference: { type: string }

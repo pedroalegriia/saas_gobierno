@@ -1,13 +1,11 @@
-import { KeyValuePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { ReportsService, TreasuryDashboard } from '../../core/services/reports.service';
+import { ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '../../core/services/reports.service';
 
 @Component({
   selector: 'app-treasury-dashboard-page',
-  imports: [KeyValuePipe, MatCardModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatIconModule],
   template: `
     <main class="page space-y-6">
       <section class="hero-panel grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
@@ -27,7 +25,7 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
       </section>
 
       <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        @for (kpi of dashboard()?.kpis | keyvalue; track kpi.key) {
+        @for (kpi of kpis(); track kpi.key) {
           <mat-card class="government-card kpi-card">
             <div class="flex items-start justify-between gap-4">
               <span class="kpi-icon">
@@ -37,7 +35,7 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
                 Activo
               </span>
             </div>
-            <span class="mt-5 block text-sm font-bold uppercase tracking-[0.12em] text-slate-400">{{ label(kpi.key) }}</span>
+            <span class="mt-5 block text-sm font-bold uppercase tracking-[0.12em] text-slate-400">{{ kpi.label }}</span>
             <strong>{{ kpi.value }}</strong>
           </mat-card>
         }
@@ -53,8 +51,26 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
             <mat-icon class="text-[var(--color-primary)]">show_chart</mat-icon>
           </div>
           <div class="chart-bars mt-8">
-            @for (bar of bars; track $index) {
-              <span [style.height.%]="bar"></span>
+            @for (point of revenueByDay(); track point.date) {
+              <span [style.height.%]="barHeight(point)" [title]="point.label + ': ' + money(point.amount)">
+                <small>{{ point.label }}</small>
+              </span>
+            }
+          </div>
+        </mat-card>
+        <mat-card class="government-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="section-eyebrow">Historico</p>
+              <h2 class="m-0 text-2xl font-black">Recaudacion mensual</h2>
+            </div>
+            <mat-icon class="text-[var(--color-primary)]">bar_chart</mat-icon>
+          </div>
+          <div class="chart-bars mt-8">
+            @for (point of revenueByMonth(); track point.month) {
+              <span [style.height.%]="monthBarHeight(point)" [title]="point.label + ': ' + money(point.amount)">
+                <small>{{ point.label }}</small>
+              </span>
             }
           </div>
         </mat-card>
@@ -62,7 +78,7 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
           <p class="section-eyebrow">Servicios</p>
           <h2 class="m-0 text-2xl font-black">Distribucion por servicio</h2>
           <div class="mt-6 grid gap-4">
-            @for (service of serviceMix; track service.label) {
+            @for (service of serviceMix(); track service.service_type) {
               <div>
                 <div class="mb-2 flex justify-between text-sm font-bold">
                   <span>{{ service.label }}</span>
@@ -77,31 +93,85 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
         </mat-card>
       </section>
 
-      <mat-card class="government-card">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="section-eyebrow">Operacion</p>
-            <h2 class="m-0 text-2xl font-black">Ultimos movimientos</h2>
-          </div>
-          <span class="status-chip">Datos del tenant</span>
-        </div>
-        <div class="mt-6 grid gap-3">
-          @for (row of activityRows; track row.title) {
-            <div class="flex items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-slate-50 p-4">
-              <div class="flex items-center gap-3">
-                <span class="grid size-11 place-items-center rounded-2xl bg-white text-[var(--color-primary)] shadow-sm">
-                  <mat-icon>{{ row.icon }}</mat-icon>
-                </span>
-                <div>
-                  <strong class="block">{{ row.title }}</strong>
-                  <span class="text-sm text-slate-500">{{ row.subtitle }}</span>
-                </div>
-              </div>
-              <span class="text-sm font-black text-slate-700">{{ row.amount }}</span>
+      <section class="grid gap-4 xl:grid-cols-3">
+        <mat-card class="government-card">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="section-eyebrow">Operacion</p>
+              <h2 class="m-0 text-2xl font-black">Ultimos pagos</h2>
             </div>
-          }
-        </div>
-      </mat-card>
+            <span class="status-chip">Datos reales</span>
+          </div>
+          <div class="mt-6 grid gap-3">
+            @for (row of latestPayments(); track row.reference ?? row.title) {
+              <div class="operation-row">
+                <div class="operation-copy">
+                  <span class="operation-icon"><mat-icon>{{ row.icon }}</mat-icon></span>
+                  <div>
+                    <strong>{{ row.title }}</strong>
+                    <span>{{ row.subtitle }}</span>
+                  </div>
+                </div>
+                <span class="operation-amount">{{ row.amount }}</span>
+              </div>
+            } @empty {
+              <p class="empty-state">Aun no hay pagos confirmados para este municipio.</p>
+            }
+          </div>
+        </mat-card>
+
+        <mat-card class="government-card">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="section-eyebrow">Cartera</p>
+              <h2 class="m-0 text-2xl font-black">Adeudos recientes</h2>
+            </div>
+            <span class="status-chip">Tenant</span>
+          </div>
+          <div class="mt-6 grid gap-3">
+            @for (row of recentDebts(); track row.subtitle) {
+              <div class="operation-row">
+                <div class="operation-copy">
+                  <span class="operation-icon"><mat-icon>{{ row.icon }}</mat-icon></span>
+                  <div>
+                    <strong>{{ row.title }}</strong>
+                    <span>{{ row.subtitle }}</span>
+                  </div>
+                </div>
+                <span class="operation-amount">{{ row.amount }}</span>
+              </div>
+            } @empty {
+              <p class="empty-state">No hay adeudos pendientes cargados.</p>
+            }
+          </div>
+        </mat-card>
+
+        <mat-card class="government-card">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="section-eyebrow">Comprobantes</p>
+              <h2 class="m-0 text-2xl font-black">Recibos emitidos</h2>
+            </div>
+            <span class="status-chip">PDF</span>
+          </div>
+          <div class="mt-6 grid gap-3">
+            @for (row of issuedReceipts(); track row.title) {
+              <div class="operation-row">
+                <div class="operation-copy">
+                  <span class="operation-icon"><mat-icon>{{ row.icon }}</mat-icon></span>
+                  <div>
+                    <strong>{{ row.title }}</strong>
+                    <span>{{ row.subtitle }}</span>
+                  </div>
+                </div>
+                <span class="operation-amount">{{ row.amount }}</span>
+              </div>
+            } @empty {
+              <p class="empty-state">Aun no hay recibos emitidos.</p>
+            }
+          </div>
+        </mat-card>
+      </section>
     </main>
   `,
   styles: [
@@ -135,7 +205,7 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
 
       @media (min-width: 900px) {
         .analytics {
-          grid-template-columns: 2fr 1fr;
+          grid-template-columns: 1.5fr 1fr 1fr;
         }
       }
 
@@ -147,10 +217,85 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
       }
 
       .chart-bars span {
+        position: relative;
         flex: 1;
         min-height: 18%;
         border-radius: 999px 999px 10px 10px;
         background: linear-gradient(180deg, var(--color-secondary), var(--color-primary));
+      }
+
+      .chart-bars small {
+        position: absolute;
+        right: 50%;
+        bottom: -24px;
+        color: var(--color-muted);
+        font-size: 0.68rem;
+        font-weight: 800;
+        transform: translateX(50%) rotate(-35deg);
+        white-space: nowrap;
+      }
+
+      .operation-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 24px;
+        padding: 14px;
+        background: #f8fafc;
+      }
+
+      .operation-copy {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .operation-copy strong,
+      .operation-copy span {
+        display: block;
+      }
+
+      .operation-copy strong {
+        font-size: 0.92rem;
+      }
+
+      .operation-copy span {
+        overflow: hidden;
+        max-width: 220px;
+        color: var(--color-muted);
+        font-size: 0.78rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .operation-icon {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 18px;
+        background: #fff;
+        color: var(--color-primary);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+      }
+
+      .operation-amount {
+        flex: 0 0 auto;
+        font-size: 0.86rem;
+        font-weight: 900;
+      }
+
+      .empty-state {
+        border-radius: 20px;
+        margin: 0;
+        padding: 18px;
+        background: #f8fafc;
+        color: var(--color-muted);
+        font-weight: 700;
       }
     `,
   ],
@@ -158,33 +303,34 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
 export class TreasuryDashboardPage {
   private readonly reports = inject(ReportsService);
   protected readonly dashboard = signal<TreasuryDashboard | null>(null);
-  protected readonly bars = [38, 52, 44, 72, 58, 88, 63, 76, 91, 69, 82, 94];
-  protected readonly serviceMix = [
-    { label: 'Predial', value: 48 },
-    { label: 'Agua potable', value: 34 },
-    { label: 'Multas', value: 18 },
-  ];
-  protected readonly activityRows = [
-    { icon: 'payments', title: 'Pago predial confirmado', subtitle: 'Referencia COL-PRE-2026000001', amount: '$1,700.00' },
-    { icon: 'water_drop', title: 'Adeudo de agua consultado', subtitle: 'Contrato AGU-COL-000123', amount: '$440.00' },
-    { icon: 'receipt_long', title: 'Recibo emitido', subtitle: 'Disponible para descarga', amount: 'PDF' },
-  ];
+  protected readonly revenueByDay = computed(() => this.dashboard()?.charts.revenue_by_day ?? []);
+  protected readonly revenueByMonth = computed(() => this.dashboard()?.charts.revenue_by_month ?? []);
+  protected readonly serviceMix = computed(() => (this.dashboard()?.charts.distribution_by_service ?? []).map((service) => ({
+    ...service,
+    value: service.percentage,
+  })));
+  protected readonly latestPayments = computed(() => this.dashboard()?.tables.latest_payments ?? []);
+  protected readonly recentDebts = computed(() => this.dashboard()?.tables.recent_debts ?? []);
+  protected readonly issuedReceipts = computed(() => this.dashboard()?.tables.issued_receipts ?? []);
+  protected readonly kpis = computed(() => {
+    const kpis = this.dashboard()?.kpis;
+
+    if (!kpis) {
+      return [];
+    }
+
+    return [
+      { key: 'daily_revenue', label: 'Recaudacion del dia', value: kpis.daily_revenue },
+      { key: 'monthly_revenue', label: 'Recaudacion mensual', value: kpis.monthly_revenue },
+      { key: 'predial_collected', label: 'Predial cobrado', value: kpis.predial_collected },
+      { key: 'water_collected', label: 'Agua cobrada', value: kpis.water_collected },
+      { key: 'fines_collected', label: 'Multas cobradas', value: kpis.fines_collected },
+      { key: 'pending_payments', label: 'Pagos pendientes', value: kpis.pending_payments },
+    ];
+  });
 
   constructor() {
     this.reports.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));
-  }
-
-  protected label(key: string): string {
-    const labels: Record<string, string> = {
-      daily_revenue: 'Recaudacion del dia',
-      monthly_revenue: 'Recaudacion mensual',
-      predial_collected: 'Predial cobrado',
-      water_collected: 'Agua cobrada',
-      fines_collected: 'Multas cobradas',
-      pending_payments: 'Pagos pendientes',
-    };
-
-    return labels[key] ?? key;
   }
 
   protected icon(key: string): string {
@@ -198,5 +344,21 @@ export class TreasuryDashboardPage {
     };
 
     return icons[key] ?? 'analytics';
+  }
+
+  protected barHeight(point: RevenuePoint): number {
+    const max = Math.max(...this.revenueByDay().map((item) => item.amount), 1);
+
+    return Math.max(18, Math.round((point.amount / max) * 100));
+  }
+
+  protected monthBarHeight(point: RevenueMonth): number {
+    const max = Math.max(...this.revenueByMonth().map((item) => item.amount), 1);
+
+    return Math.max(18, Math.round((point.amount / max) * 100));
+  }
+
+  protected money(amount: number): string {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
   }
 }
