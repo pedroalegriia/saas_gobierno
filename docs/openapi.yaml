@@ -1,0 +1,317 @@
+openapi: 3.1.0
+info:
+  title: SaaS Gobierno Municipal API
+  version: 0.1.0
+  description: API REST para pagos municipales multi-tenant.
+servers:
+  - url: https://{tenant}.pagosmunicipales.com/api/v1
+    variables:
+      tenant:
+        default: colima
+security:
+  - bearerAuth: []
+tags:
+  - name: Tenants
+  - name: Auth
+  - name: Predial
+  - name: Water
+  - name: TrafficFines
+  - name: CaptureLines
+  - name: Payments
+  - name: Receipts
+  - name: Reports
+paths:
+  /tenant:
+    get:
+      tags: [Tenants]
+      summary: Obtiene el municipio resuelto por host.
+      security: []
+      responses:
+        "200":
+          description: Tenant activo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Municipality"
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Inicia sesion administrativa o ciudadana.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+  /predial/accounts/search:
+    get:
+      tags: [Predial]
+      summary: Busca una cuenta predial por clave catastral.
+      security: []
+      parameters:
+        - name: property_key
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cuenta predial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredialAccount"
+  /water/accounts/search:
+    get:
+      tags: [Water]
+      summary: Busca una cuenta de agua por contrato.
+      security: []
+      parameters:
+        - name: contract_number
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cuenta de agua
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaterAccount"
+  /traffic-fines/search:
+    get:
+      tags: [TrafficFines]
+      summary: Busca multas por folio o placa.
+      security: []
+      parameters:
+        - name: folio
+          in: query
+          schema:
+            type: string
+        - name: plate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Multas encontradas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrafficFine"
+  /capture-lines:
+    post:
+      tags: [CaptureLines]
+      summary: Genera una linea de captura.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaptureLineRequest"
+      responses:
+        "201":
+          description: Linea creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureLine"
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Inicia un pago con gateway desacoplado.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
+      responses:
+        "202":
+          description: Pago recibido para procesamiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+  /payments/webhooks/{gateway}:
+    post:
+      tags: [Payments]
+      summary: Recibe webhooks de gateways.
+      security: []
+      parameters:
+        - name: gateway
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [openpay, mercadopago, stripe]
+      responses:
+        "202":
+          description: Webhook aceptado
+  /receipts/{folio}:
+    get:
+      tags: [Receipts]
+      summary: Descarga un recibo PDF por folio.
+      parameters:
+        - name: folio
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF del recibo
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /treasury/dashboard:
+    get:
+      tags: [Reports]
+      summary: KPIs y graficas de tesoreria.
+      responses:
+        "200":
+          description: Datos del dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreasuryDashboard"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Municipality:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        domain: { type: [string, "null"] }
+        logo: { type: [string, "null"] }
+        primary_color: { type: string }
+        secondary_color: { type: string }
+        status: { type: string }
+    AuthToken:
+      type: object
+      properties:
+        token_type: { type: string, example: Bearer }
+        access_token: { type: string }
+        expires_in: { type: integer }
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [super_admin, treasury, citizen] }
+    PredialAccount:
+      type: object
+      properties:
+        id: { type: integer }
+        property_key: { type: string }
+        owner_name: { type: string }
+        address: { type: string }
+        current_balance: { type: number, format: float }
+        overdue_balance: { type: number, format: float }
+        total_balance: { type: number, format: float }
+        status: { type: string }
+    WaterAccount:
+      type: object
+      properties:
+        id: { type: integer }
+        contract_number: { type: string }
+        customer_name: { type: string }
+        address: { type: string }
+        current_balance: { type: number, format: float }
+        overdue_balance: { type: number, format: float }
+        total_balance: { type: number, format: float }
+        status: { type: string }
+    TrafficFine:
+      type: object
+      properties:
+        id: { type: integer }
+        folio: { type: string }
+        plate: { type: string }
+        offender_name: { type: [string, "null"] }
+        amount: { type: number, format: float }
+        status: { type: string }
+        violation_date: { type: string, format: date }
+    CreateCaptureLineRequest:
+      type: object
+      required: [service_type, service_id]
+      properties:
+        service_type:
+          type: string
+          enum: [PREDIAL, WATER, TRAFFIC_FINE]
+        service_id:
+          type: integer
+    CaptureLine:
+      type: object
+      properties:
+        id: { type: integer }
+        folio: { type: string }
+        service_type: { type: string }
+        service_id: { type: integer }
+        amount: { type: number, format: float }
+        expiration_date: { type: string, format: date }
+        status: { type: string, enum: [PENDING, PAID, EXPIRED, CANCELLED] }
+    CreatePaymentRequest:
+      type: object
+      required: [capture_line_folio, gateway, method, payment_token]
+      properties:
+        capture_line_folio: { type: string }
+        gateway:
+          type: string
+          enum: [openpay, mercadopago, stripe]
+        method:
+          type: string
+          enum: [credit_card, debit_card, spei]
+        payment_token: { type: string }
+    Payment:
+      type: object
+      properties:
+        id: { type: integer }
+        gateway: { type: string }
+        method: { type: string }
+        amount: { type: number, format: float }
+        reference: { type: string }
+        status: { type: string }
+    TreasuryDashboard:
+      type: object
+      properties:
+        kpis:
+          type: object
+          properties:
+            daily_revenue: { type: number, format: float }
+            monthly_revenue: { type: number, format: float }
+            predial_collected: { type: number, format: float }
+            water_collected: { type: number, format: float }
+            fines_collected: { type: number, format: float }
+            pending_payments: { type: integer }

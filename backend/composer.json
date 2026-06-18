@@ -1,0 +1,49 @@
+{
+  "name": "municipal-saas/api",
+  "description": "API Laravel 12 para plataforma SaaS multi-tenant de pagos municipales.",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": "^8.4",
+    "barryvdh/laravel-dompdf": "*",
+    "laravel/framework": "^12.0",
+    "laravel/sanctum": "*",
+    "maatwebsite/excel": "*"
+  },
+  "require-dev": {
+    "fakerphp/faker": "*",
+    "laravel/pint": "*",
+    "mockery/mockery": "*",
+    "nunomaduro/collision": "*",
+    "phpunit/phpunit": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "MunicipalSaas\\": "src/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
+    "test": "php artisan test",
+    "lint": "pint --test",
+    "format": "pint"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
