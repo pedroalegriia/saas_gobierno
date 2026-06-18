@@ -8,6 +8,8 @@ export interface TreasuryDashboard {
     revenue_by_day: RevenuePoint[];
     revenue_by_month: RevenueMonth[];
     distribution_by_service: ServiceDistribution[];
+    payment_methods: PaymentBreakdown[];
+    payment_gateways: PaymentBreakdown[];
   };
   tables: {
     latest_payments: DashboardRow[];
@@ -41,6 +43,14 @@ export interface ServiceDistribution {
   service_type: string;
   label: string;
   amount: number;
+  percentage: number;
+}
+
+export interface PaymentBreakdown {
+  key: string;
+  label: string;
+  amount: number;
+  count: number;
   percentage: number;
 }
 

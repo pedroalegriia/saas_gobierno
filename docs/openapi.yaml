@@ -331,6 +331,14 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/ServiceDistribution"
+            payment_methods:
+              type: array
+              items:
+                $ref: "#/components/schemas/PaymentBreakdown"
+            payment_gateways:
+              type: array
+              items:
+                $ref: "#/components/schemas/PaymentBreakdown"
         tables:
           type: object
           properties:
@@ -364,6 +372,14 @@ components:
         service_type: { type: string, enum: [PREDIAL, WATER, TRAFFIC_FINE] }
         label: { type: string }
         amount: { type: number, format: float }
+        percentage: { type: integer }
+    PaymentBreakdown:
+      type: object
+      properties:
+        key: { type: string, example: credit_card }
+        label: { type: string, example: "Tarjeta de credito" }
+        amount: { type: number, format: float }
+        count: { type: integer }
         percentage: { type: integer }
     DashboardRow:
       type: object

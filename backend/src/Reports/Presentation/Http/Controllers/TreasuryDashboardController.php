@@ -39,6 +39,8 @@ final readonly class TreasuryDashboardController
                 'revenue_by_day' => $this->revenueByDay($municipalityId, $today),
                 'revenue_by_month' => $this->revenueByMonth($municipalityId, $today),
                 'distribution_by_service' => $this->distributionByService($municipalityId, $monthStart, $today->copy()->endOfDay()),
+                'payment_methods' => $this->paymentBreakdown($municipalityId, 'method', $monthStart, $today->copy()->endOfDay()),
+                'payment_gateways' => $this->paymentBreakdown($municipalityId, 'gateway', $monthStart, $today->copy()->endOfDay()),
             ],
             'tables' => [
                 'latest_payments' => $this->latestPayments($municipalityId),
@@ -163,6 +165,41 @@ final readonly class TreasuryDashboardController
     }
 
     /**
+     * @return list<array{key: string, label: string, amount: float, count: int, percentage: int}>
+     */
+    private function paymentBreakdown(int $municipalityId, string $column, Carbon $start, Carbon $end): array
+    {
+        $allowedColumns = ['method', 'gateway'];
+        if (! in_array($column, $allowedColumns, true)) {
+            return [];
+        }
+
+        $rows = DB::table('payments')
+            ->selectRaw("{$column} as bucket, SUM(amount) as total, COUNT(*) as total_count")
+            ->where('municipality_id', $municipalityId)
+            ->where('status', 'PAID')
+            ->whereBetween('paid_at', [$start, $end])
+            ->groupBy('bucket')
+            ->get();
+
+        $total = max(1, (float) $rows->sum('total'));
+
+        return $rows
+            ->map(fn (object $row): array => [
+                'key' => (string) $row->bucket,
+                'label' => $column === 'method'
+                    ? $this->paymentMethodLabel((string) $row->bucket)
+                    : $this->gatewayLabel((string) $row->bucket),
+                'amount' => (float) $row->total,
+                'count' => (int) $row->total_count,
+                'percentage' => (int) round(((float) $row->total / $total) * 100),
+            ])
+            ->sortByDesc('amount')
+            ->values()
+            ->all();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function latestPayments(int $municipalityId): array
@@ -282,6 +319,26 @@ final readonly class TreasuryDashboardController
             'WATER' => 'water_drop',
             'TRAFFIC_FINE' => 'traffic',
             default => 'payments',
+        };
+    }
+
+    private function paymentMethodLabel(string $method): string
+    {
+        return match ($method) {
+            'credit_card' => 'Tarjeta de credito',
+            'debit_card' => 'Tarjeta de debito',
+            'spei' => 'SPEI',
+            default => ucfirst(str_replace('_', ' ', $method)),
+        };
+    }
+
+    private function gatewayLabel(string $gateway): string
+    {
+        return match ($gateway) {
+            'openpay' => 'OpenPay',
+            'mercadopago' => 'MercadoPago',
+            'stripe' => 'Stripe',
+            default => ucfirst($gateway),
         };
     }
 }

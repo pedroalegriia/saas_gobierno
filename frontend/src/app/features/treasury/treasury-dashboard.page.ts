@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '../../core/services/reports.service';
+import { PaymentBreakdown, ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '../../core/services/reports.service';
 
 @Component({
   selector: 'app-treasury-dashboard-page',
@@ -41,6 +41,80 @@ import { ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '.
         }
       </section>
 
+      <section class="grid gap-4 xl:grid-cols-[1fr_1fr_1.2fr]">
+        <mat-card class="government-card">
+          <p class="section-eyebrow">Tipos de pago</p>
+          <h2 class="m-0 text-2xl font-black">Cobro por metodo</h2>
+          <div class="mt-6 grid gap-4">
+            @for (method of paymentMethods(); track method.key) {
+              <div class="breakdown-row">
+                <div class="breakdown-heading">
+                  <span class="breakdown-icon"><mat-icon>{{ paymentTypeIcon(method.key) }}</mat-icon></span>
+                  <div>
+                    <strong>{{ method.label }}</strong>
+                    <span>{{ method.count }} operaciones</span>
+                  </div>
+                </div>
+                <div class="breakdown-meta">
+                  <span>{{ money(method.amount) }}</span>
+                  <strong>{{ method.percentage }}%</strong>
+                </div>
+                <div class="breakdown-track">
+                  <span [style.width.%]="method.percentage"></span>
+                </div>
+              </div>
+            } @empty {
+              <p class="empty-state">No hay pagos confirmados por metodo.</p>
+            }
+          </div>
+        </mat-card>
+
+        <mat-card class="government-card">
+          <p class="section-eyebrow">Pasarelas</p>
+          <h2 class="m-0 text-2xl font-black">Cobro por gateway</h2>
+          <div class="mt-6 grid gap-4">
+            @for (gateway of paymentGateways(); track gateway.key) {
+              <div class="breakdown-row">
+                <div class="breakdown-heading">
+                  <span class="breakdown-icon"><mat-icon>account_balance</mat-icon></span>
+                  <div>
+                    <strong>{{ gateway.label }}</strong>
+                    <span>{{ gateway.count }} operaciones</span>
+                  </div>
+                </div>
+                <div class="breakdown-meta">
+                  <span>{{ money(gateway.amount) }}</span>
+                  <strong>{{ gateway.percentage }}%</strong>
+                </div>
+                <div class="breakdown-track gateway">
+                  <span [style.width.%]="gateway.percentage"></span>
+                </div>
+              </div>
+            } @empty {
+              <p class="empty-state">No hay pagos confirmados por gateway.</p>
+            }
+          </div>
+        </mat-card>
+
+        <mat-card class="government-card">
+          <p class="section-eyebrow">Servicios</p>
+          <h2 class="m-0 text-2xl font-black">Distribucion por servicio</h2>
+          <div class="mt-6 grid gap-4">
+            @for (service of serviceMix(); track service.service_type) {
+              <div>
+                <div class="mb-2 flex justify-between text-sm font-bold">
+                  <span>{{ service.label }}</span>
+                  <span>{{ service.value }}%</span>
+                </div>
+                <div class="h-3 rounded-full bg-slate-100">
+                  <span class="block h-3 rounded-full bg-[var(--color-primary)]" [style.width.%]="service.value"></span>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card>
+      </section>
+
       <section class="analytics">
         <mat-card class="government-card">
           <div class="flex items-center justify-between">
@@ -74,23 +148,18 @@ import { ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '.
             }
           </div>
         </mat-card>
-        <mat-card class="government-card">
-          <p class="section-eyebrow">Servicios</p>
-          <h2 class="m-0 text-2xl font-black">Distribucion por servicio</h2>
-          <div class="mt-6 grid gap-4">
-            @for (service of serviceMix(); track service.service_type) {
-              <div>
-                <div class="mb-2 flex justify-between text-sm font-bold">
-                  <span>{{ service.label }}</span>
-                  <span>{{ service.value }}%</span>
-                </div>
-                <div class="h-3 rounded-full bg-slate-100">
-                  <span class="block h-3 rounded-full bg-[var(--color-primary)]" [style.width.%]="service.value"></span>
-                </div>
-              </div>
-            }
+      </section>
+
+      <section>
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="section-eyebrow">Operacion diaria</p>
+            <h2 class="m-0 text-3xl font-black">Movimientos separados</h2>
           </div>
-        </mat-card>
+          <p class="max-w-lg text-sm leading-6 text-slate-500">
+            Pagos, adeudos y recibos se muestran en columnas independientes para no mezclar conceptos.
+          </p>
+        </div>
       </section>
 
       <section class="grid gap-4 xl:grid-cols-3">
@@ -289,6 +358,77 @@ import { ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '.
         font-weight: 900;
       }
 
+      .breakdown-row {
+        display: grid;
+        gap: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 24px;
+        padding: 16px;
+        background: #f8fafc;
+      }
+
+      .breakdown-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .breakdown-heading strong,
+      .breakdown-heading span {
+        display: block;
+      }
+
+      .breakdown-heading span {
+        color: var(--color-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .breakdown-icon {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        place-items: center;
+        border-radius: 18px;
+        background: #fff;
+        color: var(--color-primary);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+      }
+
+      .breakdown-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 900;
+      }
+
+      .breakdown-meta span {
+        color: #0f172a;
+      }
+
+      .breakdown-meta strong {
+        color: var(--color-primary);
+      }
+
+      .breakdown-track {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e2e8f0;
+      }
+
+      .breakdown-track span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+      }
+
+      .breakdown-track.gateway span {
+        background: linear-gradient(90deg, #0f172a, var(--color-primary));
+      }
+
       .empty-state {
         border-radius: 20px;
         margin: 0;
@@ -305,6 +445,8 @@ export class TreasuryDashboardPage {
   protected readonly dashboard = signal<TreasuryDashboard | null>(null);
   protected readonly revenueByDay = computed(() => this.dashboard()?.charts.revenue_by_day ?? []);
   protected readonly revenueByMonth = computed(() => this.dashboard()?.charts.revenue_by_month ?? []);
+  protected readonly paymentMethods = computed(() => this.dashboard()?.charts.payment_methods ?? []);
+  protected readonly paymentGateways = computed(() => this.dashboard()?.charts.payment_gateways ?? []);
   protected readonly serviceMix = computed(() => (this.dashboard()?.charts.distribution_by_service ?? []).map((service) => ({
     ...service,
     value: service.percentage,
@@ -360,5 +502,15 @@ export class TreasuryDashboardPage {
 
   protected money(amount: number): string {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+  }
+
+  protected paymentTypeIcon(type: PaymentBreakdown['key']): string {
+    const icons: Record<string, string> = {
+      credit_card: 'credit_card',
+      debit_card: 'payment',
+      spei: 'account_balance',
+    };
+
+    return icons[type] ?? 'payments';
   }
 }
