@@ -30,6 +30,7 @@ infra/          Docker, Nginx y Supervisor
 - [Modelo de datos y diagrama ER](docs/database.md)
 - [OpenAPI](docs/openapi.yaml)
 - [Guia UI/UX corporativa](docs/ui-ux-guidelines.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## Fases sugeridas
 
@@ -44,6 +45,8 @@ infra/          Docker, Nginx y Supervisor
 La maquina de este agente no incluye PHP, Composer ni Docker. En un entorno
 con esas herramientas instaladas:
 
+### Opcion Docker
+
 ```bash
 cp backend/.env.example backend/.env
 docker compose -f infra/docker-compose.yml up -d --build
@@ -51,3 +54,34 @@ docker compose -f infra/docker-compose.yml exec api composer install
 docker compose -f infra/docker-compose.yml exec api php artisan migrate --seed
 cd frontend && npm install && npm run start
 ```
+
+En Docker, `DB_HOST=mysql` es correcto porque `mysql` es el nombre del servicio
+dentro de la red de Docker Compose.
+
+### Opcion local sin Docker
+
+Si ejecutas `php artisan migrate` directamente desde tu maquina, no uses
+`DB_HOST=mysql`; ese hostname solo existe dentro de Docker. Usa el ejemplo local:
+
+```bash
+cp backend/.env.local.example backend/.env
+cd backend
+composer install
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
+
+Asegurate de tener MySQL corriendo localmente y de que estos valores coincidan
+con tu instalacion:
+
+```dotenv
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=saas_gobierno
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Si ves un error como `getaddrinfo for mysql failed`, significa que estas
+ejecutando Artisan fuera de Docker con un `.env` configurado para Docker.
