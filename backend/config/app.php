@@ -14,6 +14,7 @@ return [
     'providers' => [
         Illuminate\Filesystem\FilesystemServiceProvider::class,
         Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
         App\Providers\AppServiceProvider::class,
         App\Providers\DomainServiceProvider::class,
         App\Providers\EventServiceProvider::class,
