@@ -6,8 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { Observable } from 'rxjs';
 import { PaymentsService } from '../../core/services/payments.service';
 import { DebtSummary, ServiceType } from '../../core/models/payment.model';
+
+type DebtSearchResponse = { data: DebtSummary | DebtSummary[] };
 
 @Component({
   selector: 'app-debt-search-page',
@@ -109,7 +112,7 @@ export class DebtSearchPage {
     this.loading.set(true);
     this.message.set('');
     const query = this.form.controls.query.value.trim();
-    const request = this.service() === 'predial'
+    const request: Observable<DebtSearchResponse> = this.service() === 'predial'
       ? this.payments.searchPredial(query)
       : this.service() === 'agua'
         ? this.payments.searchWater(query)
