@@ -63,6 +63,8 @@ php artisan migrate --seed
 php artisan serve
 ```
 
+El backend local queda en `http://localhost:8000`.
+
 Asegurate de tener creada la base de datos local antes de migrar:
 
 ```sql
@@ -85,6 +87,14 @@ DB_PASSWORD=
 cd frontend
 npm install
 npm run start
+```
+
+El frontend local queda en `http://localhost:4200`. El dev server usa
+`frontend/proxy.conf.json` para reenviar `/api/*` al backend en
+`http://localhost:8000`, por ejemplo:
+
+```text
+http://localhost:4200/api/v1/auth/login -> http://localhost:8000/api/v1/auth/login
 ```
 
 ## Docker
