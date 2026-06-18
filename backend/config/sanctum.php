@@ -4,7 +4,7 @@ use Laravel\Sanctum\Sanctum;
 
 return [
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'localhost,localhost:4200')),
-    'guard' => ['web'],
+    'guard' => array_filter(explode(',', env('SANCTUM_GUARD', ''))),
     'expiration' => null,
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
     'middleware' => [
