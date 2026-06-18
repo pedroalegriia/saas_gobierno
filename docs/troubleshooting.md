@@ -2,37 +2,38 @@
 
 ## `getaddrinfo for mysql failed`
 
-Este error aparece cuando ejecutas Artisan fuera de Docker con:
+Este error aparece cuando ejecutas Artisan localmente con una configuracion de
+Docker:
 
 ```dotenv
 DB_HOST=mysql
 ```
 
-`mysql` es el hostname del servicio dentro de Docker Compose. Si ejecutas
-Laravel localmente en tu maquina, usa:
+`mysql` es el hostname del servicio dentro de Docker Compose. Para desarrollo
+local usa:
 
 ```dotenv
 DB_HOST=127.0.0.1
 DB_PORT=3306
 ```
 
-Opciones:
-
-### Ejecutar migraciones dentro de Docker
-
-```bash
-docker compose -f infra/docker-compose.yml exec api php artisan migrate --seed
-```
-
 ### Ejecutar migraciones localmente
 
 ```bash
-cp backend/.env.local.example backend/.env
+cp backend/.env.example backend/.env
 cd backend
 composer install
 php artisan key:generate
 php artisan migrate --seed
 ```
+
+Antes de migrar, crea la base de datos:
+
+```sql
+CREATE DATABASE saas_gobierno CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Si en algun momento decides usar Docker, usa `backend/.env.docker.example`.
 
 ## `Target class [files] does not exist`
 

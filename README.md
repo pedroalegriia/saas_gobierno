@@ -4,8 +4,8 @@ Plataforma SaaS multi-tenant para ayuntamientos de Mexico enfocada en pagos
 en linea de predial, agua potable y multas de transito.
 
 Esta primera fase deja una base de arquitectura, modelo de datos, estructura
-de carpetas, contratos de dominio, migraciones, API REST documentada, frontend
-Angular base e infraestructura Docker para continuar el desarrollo por modulos.
+de carpetas, contratos de dominio, migraciones, API REST documentada y frontend
+Angular base para continuar el desarrollo por modulos.
 
 ## Stack objetivo
 
@@ -13,7 +13,7 @@ Angular base e infraestructura Docker para continuar el desarrollo por modulos.
   Events, Policies, API Resources, Form Requests y PHPUnit.
 - Frontend: Angular 20, Angular Material, Tailwind CSS, RxJS, Signals,
   Standalone Components, Routing, JWT, PWA y diseno Mobile First.
-- Infraestructura: Docker, Nginx, Redis y Supervisor.
+- Infraestructura opcional: Docker, Nginx, Redis y Supervisor.
 
 ## Estructura
 
@@ -21,7 +21,7 @@ Angular base e infraestructura Docker para continuar el desarrollo por modulos.
 backend/        API Laravel con arquitectura limpia y modulos DDD
 frontend/       SPA Angular para portal ciudadano y dashboard tesoreria
 docs/           Arquitectura, modelo de datos, ER y OpenAPI
-infra/          Docker, Nginx y Supervisor
+infra/          Docker, Nginx y Supervisor (opcional)
 ```
 
 ## Documentacion principal
@@ -40,31 +40,22 @@ infra/          Docker, Nginx y Supervisor
 4. Lineas de captura, pagos, webhooks y recibos.
 5. Dashboard, reportes, exportaciones y hardening productivo.
 
-## Puesta en marcha esperada
+## Puesta en marcha local
 
-La maquina de este agente no incluye PHP, Composer ni Docker. En un entorno
-con esas herramientas instaladas:
+El flujo recomendado para desarrollo y pruebas locales no usa Docker.
 
-### Opcion Docker
+Requisitos locales:
+
+- PHP 8.4+
+- Composer
+- MySQL 8
+- Node 22+
+- npm
+
+### Backend
 
 ```bash
 cp backend/.env.example backend/.env
-docker compose -f infra/docker-compose.yml up -d --build
-docker compose -f infra/docker-compose.yml exec api composer install
-docker compose -f infra/docker-compose.yml exec api php artisan migrate --seed
-cd frontend && npm install && npm run start
-```
-
-En Docker, `DB_HOST=mysql` es correcto porque `mysql` es el nombre del servicio
-dentro de la red de Docker Compose.
-
-### Opcion local sin Docker
-
-Si ejecutas `php artisan migrate` directamente desde tu maquina, no uses
-`DB_HOST=mysql`; ese hostname solo existe dentro de Docker. Usa el ejemplo local:
-
-```bash
-cp backend/.env.local.example backend/.env
 cd backend
 composer install
 php artisan key:generate
@@ -72,8 +63,13 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Asegurate de tener MySQL corriendo localmente y de que estos valores coincidan
-con tu instalacion:
+Asegurate de tener creada la base de datos local antes de migrar:
+
+```sql
+CREATE DATABASE saas_gobierno CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+La configuracion local por defecto es:
 
 ```dotenv
 DB_HOST=127.0.0.1
@@ -83,5 +79,25 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Si ves un error como `getaddrinfo for mysql failed`, significa que estas
-ejecutando Artisan fuera de Docker con un `.env` configurado para Docker.
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run start
+```
+
+## Docker
+
+Docker queda como opcion secundaria para mas adelante. Si decides usarlo,
+parte de `backend/.env.docker.example`:
+
+```bash
+cp backend/.env.docker.example backend/.env
+docker compose -f infra/docker-compose.yml up -d --build
+docker compose -f infra/docker-compose.yml exec api composer install
+docker compose -f infra/docker-compose.yml exec api php artisan migrate --seed
+```
+
+En Docker, `DB_HOST=mysql` es correcto porque `mysql` es el nombre del servicio
+dentro de la red de Docker Compose. Para desarrollo local, usa `DB_HOST=127.0.0.1`.
