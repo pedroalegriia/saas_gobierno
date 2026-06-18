@@ -13,6 +13,7 @@ return [
     'cipher' => 'AES-256-CBC',
     'providers' => [
         Illuminate\Filesystem\FilesystemServiceProvider::class,
+        Illuminate\Redis\RedisServiceProvider::class,
         Illuminate\Cache\CacheServiceProvider::class,
         Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
         App\Providers\AppServiceProvider::class,
