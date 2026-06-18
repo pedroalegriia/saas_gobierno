@@ -65,11 +65,55 @@ export interface DashboardRow {
   issued_at?: string;
 }
 
+export interface TreasuryCaptureLineRequest {
+  service_type: 'PREDIAL' | 'WATER' | 'TRAFFIC_FINE';
+  lookup: string;
+  include_oxxo_reference: boolean;
+}
+
+export interface TreasuryCaptureLineResponse {
+  capture_line: {
+    id: number;
+    folio: string;
+    service_type: string;
+    service_id: number;
+    amount: string;
+    expiration_date: string;
+    status: string;
+  };
+  citizen: {
+    id: number;
+    reference: string;
+    name: string;
+    address: string;
+    service_type: string;
+  };
+  delivery: {
+    payment_link: string;
+    document_url: string;
+    expires_at: string;
+  };
+  openpay: {
+    gateway: string;
+    method: string;
+    reference: string;
+    paynet_reference: string;
+    store: string;
+    amount: string;
+    expires_at: string;
+    instructions: string;
+  } | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly api = inject(ApiClientService);
 
   dashboard() {
     return this.api.get<TreasuryDashboard>('/treasury/dashboard');
+  }
+
+  createTreasuryCaptureLine(payload: TreasuryCaptureLineRequest) {
+    return this.api.post<TreasuryCaptureLineResponse>('/treasury/capture-lines', payload);
   }
 }

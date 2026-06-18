@@ -17,6 +17,20 @@ final readonly class OpenPayPaymentGateway implements PaymentGatewayInterface
 
     public function charge(PaymentRequestData $request, CaptureLineData $captureLine): PaymentResultData
     {
+        if ($request->method === 'oxxo_cash') {
+            return new PaymentResultData(
+                gateway: 'openpay',
+                reference: 'OP-OXXO-' . $captureLine->folio,
+                status: PaymentStatus::Pending->value,
+                amount: $captureLine->amount,
+                metadata: [
+                    'capture_line' => $captureLine->folio,
+                    'method' => 'oxxo_cash',
+                    'paynet_reference' => $this->paynetReference($captureLine->folio),
+                ],
+            );
+        }
+
         return new PaymentResultData(
             gateway: 'openpay',
             reference: 'op_' . $captureLine->folio,
@@ -35,5 +49,10 @@ final readonly class OpenPayPaymentGateway implements PaymentGatewayInterface
             amount: (string) ($payload['amount'] ?? '0.00'),
             metadata: $payload,
         );
+    }
+
+    private function paynetReference(string $folio): string
+    {
+        return trim(chunk_split((string) abs(crc32($folio . '|openpay|oxxo')), 4, ' '));
     }
 }

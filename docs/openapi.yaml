@@ -198,6 +198,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TreasuryDashboard"
+  /treasury/capture-lines:
+    post:
+      tags: [CaptureLines]
+      summary: Genera una linea de captura desde tesoreria con link y referencia OXXO/OpenPay.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTreasuryCaptureLineRequest"
+      responses:
+        "201":
+          description: Linea creada con datos de entrega
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreasuryCaptureLineResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -292,7 +309,7 @@ components:
           enum: [openpay, mercadopago, stripe]
         method:
           type: string
-          enum: [credit_card, debit_card, spei]
+          enum: [credit_card, debit_card, spei, oxxo_cash]
         payment_token: { type: string }
     Payment:
       type: object
@@ -303,6 +320,49 @@ components:
         amount: { type: number, format: float }
         reference: { type: string }
         status: { type: string }
+    CreateTreasuryCaptureLineRequest:
+      type: object
+      required: [service_type, lookup]
+      properties:
+        service_type:
+          type: string
+          enum: [PREDIAL, WATER, TRAFFIC_FINE]
+        lookup:
+          type: string
+          example: COL-001-002-003
+        include_oxxo_reference:
+          type: boolean
+          default: true
+    TreasuryCaptureLineResponse:
+      type: object
+      properties:
+        capture_line:
+          $ref: "#/components/schemas/CaptureLine"
+        citizen:
+          type: object
+          properties:
+            id: { type: integer }
+            reference: { type: string }
+            name: { type: string }
+            address: { type: string }
+            service_type: { type: string }
+        delivery:
+          type: object
+          properties:
+            payment_link: { type: string, format: uri }
+            document_url: { type: string, format: uri }
+            expires_at: { type: string, format: date }
+        openpay:
+          type: object
+          properties:
+            gateway: { type: string, example: openpay }
+            method: { type: string, example: oxxo_cash }
+            reference: { type: string }
+            paynet_reference: { type: string }
+            store: { type: string, example: OXXO }
+            amount: { type: string }
+            expires_at: { type: string, format: date }
+            instructions: { type: string }
     TreasuryDashboard:
       type: object
       properties:

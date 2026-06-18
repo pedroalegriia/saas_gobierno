@@ -1,11 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { PaymentBreakdown, ReportsService, RevenueMonth, RevenuePoint, TreasuryDashboard } from '../../core/services/reports.service';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { PaymentBreakdown, ReportsService, RevenueMonth, RevenuePoint, TreasuryCaptureLineResponse, TreasuryDashboard } from '../../core/services/reports.service';
 
 @Component({
   selector: 'app-treasury-dashboard-page',
-  imports: [MatCardModule, MatIconModule],
+  imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, ReactiveFormsModule],
   template: `
     <main class="page space-y-6">
       <section class="hero-panel grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
@@ -22,6 +27,90 @@ import { PaymentBreakdown, ReportsService, RevenueMonth, RevenuePoint, TreasuryD
           <span class="block text-sm text-white/60">Corte operativo</span>
           <strong class="text-2xl font-black">Hoy</strong>
         </div>
+      </section>
+
+      <section class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <mat-card class="government-card">
+          <p class="section-eyebrow">Atencion en caja</p>
+          <h2 class="m-0 text-2xl font-black">Generar linea de captura</h2>
+          <p class="mt-3 text-sm leading-6 text-slate-500">
+            Busca por clave catastral, contrato, folio de multa o placa. Puedes entregar documento impreso o enviar link de pago.
+          </p>
+
+          <form class="mt-6 grid gap-4" [formGroup]="captureLineForm" (ngSubmit)="generateCaptureLine()">
+            <mat-form-field appearance="outline">
+              <mat-label>Servicio</mat-label>
+              <mat-select formControlName="service_type">
+                <mat-option value="PREDIAL">Predial</mat-option>
+                <mat-option value="WATER">Agua potable</mat-option>
+                <mat-option value="TRAFFIC_FINE">Multas de transito</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ lookupLabel() }}</mat-label>
+              <input matInput formControlName="lookup" autocomplete="off">
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" class="corporate-button" type="submit" [disabled]="captureLineForm.invalid || generatingCaptureLine()">
+              @if (generatingCaptureLine()) {
+                Generando...
+              } @else {
+                Generar linea y referencia OXXO
+              }
+            </button>
+          </form>
+
+          @if (captureLineMessage()) {
+            <p class="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">{{ captureLineMessage() }}</p>
+          }
+        </mat-card>
+
+        <mat-card class="government-card">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="section-eyebrow">Entrega al contribuyente</p>
+              <h2 class="m-0 text-2xl font-black">Documento, link y OXXO</h2>
+            </div>
+            <span class="status-chip">OpenPay</span>
+          </div>
+
+          @if (generatedCaptureLine(); as result) {
+            <div class="mt-6 grid gap-4">
+              <div class="rounded-3xl bg-slate-950 p-5 text-white">
+                <span class="text-sm font-bold uppercase tracking-[0.14em] text-white/50">Folio</span>
+                <strong class="mt-2 block break-words text-3xl">{{ result.capture_line.folio }}</strong>
+                <p class="mt-2 text-white/70">{{ result.citizen.name }} · {{ result.citizen.reference }}</p>
+              </div>
+
+              <div class="grid gap-3 md:grid-cols-2">
+                <a mat-flat-button color="primary" class="corporate-button" [href]="result.delivery.document_url" target="_blank" rel="noopener">
+                  Abrir documento
+                </a>
+                <button mat-stroked-button class="corporate-button" type="button" (click)="copy(result.delivery.payment_link)">
+                  Copiar link de pago
+                </button>
+              </div>
+
+              @if (result.openpay) {
+                <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                  <p class="m-0 text-sm font-black uppercase tracking-[0.14em] text-amber-700">Referencia OXXO / OpenPay</p>
+                  <strong class="mt-2 block text-2xl text-slate-950">{{ result.openpay.paynet_reference }}</strong>
+                  <p class="mt-2 text-sm leading-6 text-slate-600">{{ result.openpay.instructions }}</p>
+                  <div class="mt-4 grid gap-2 text-sm">
+                    <span><strong>Monto:</strong> {{ money(+result.openpay.amount) }}</span>
+                    <span><strong>Vence:</strong> {{ result.openpay.expires_at }}</span>
+                    <span><strong>Referencia interna:</strong> {{ result.openpay.reference }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-state mt-6">
+              Aun no se ha generado una linea. Al crearla veras aqui el documento imprimible, link de pago y referencia OXXO.
+            </p>
+          }
+        </mat-card>
       </section>
 
       <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -441,8 +530,17 @@ import { PaymentBreakdown, ReportsService, RevenueMonth, RevenuePoint, TreasuryD
   ],
 })
 export class TreasuryDashboardPage {
+  private readonly fb = inject(FormBuilder);
   private readonly reports = inject(ReportsService);
   protected readonly dashboard = signal<TreasuryDashboard | null>(null);
+  protected readonly generatedCaptureLine = signal<TreasuryCaptureLineResponse | null>(null);
+  protected readonly generatingCaptureLine = signal(false);
+  protected readonly captureLineMessage = signal('');
+  protected readonly captureLineForm = this.fb.nonNullable.group({
+    service_type: ['PREDIAL', Validators.required],
+    lookup: ['', [Validators.required, Validators.minLength(3)]],
+    include_oxxo_reference: [true],
+  });
   protected readonly revenueByDay = computed(() => this.dashboard()?.charts.revenue_by_day ?? []);
   protected readonly revenueByMonth = computed(() => this.dashboard()?.charts.revenue_by_month ?? []);
   protected readonly paymentMethods = computed(() => this.dashboard()?.charts.payment_methods ?? []);
@@ -512,5 +610,40 @@ export class TreasuryDashboardPage {
     };
 
     return icons[type] ?? 'payments';
+  }
+
+  protected lookupLabel(): string {
+    const labels: Record<string, string> = {
+      PREDIAL: 'Clave catastral',
+      WATER: 'Numero de contrato',
+      TRAFFIC_FINE: 'Folio o placa',
+    };
+
+    return labels[this.captureLineForm.controls.service_type.value] ?? 'Dato de busqueda';
+  }
+
+  protected generateCaptureLine(): void {
+    this.generatingCaptureLine.set(true);
+    this.captureLineMessage.set('');
+
+    this.reports.createTreasuryCaptureLine({
+      service_type: this.captureLineForm.controls.service_type.value as 'PREDIAL' | 'WATER' | 'TRAFFIC_FINE',
+      lookup: this.captureLineForm.controls.lookup.value.trim(),
+      include_oxxo_reference: this.captureLineForm.controls.include_oxxo_reference.value,
+    }).subscribe({
+      next: (response) => {
+        this.generatedCaptureLine.set(response);
+        this.generatingCaptureLine.set(false);
+        this.reports.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));
+      },
+      error: () => {
+        this.captureLineMessage.set('No fue posible generar la linea de captura. Verifica el dato capturado.');
+        this.generatingCaptureLine.set(false);
+      },
+    });
+  }
+
+  protected copy(value: string): void {
+    void navigator.clipboard?.writeText(value);
   }
 }

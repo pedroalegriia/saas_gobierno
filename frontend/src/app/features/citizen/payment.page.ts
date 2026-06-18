@@ -49,6 +49,7 @@ import { Payment } from '../../core/models/payment.model';
                 <mat-option value="credit_card">Tarjeta de credito</mat-option>
                 <mat-option value="debit_card">Tarjeta de debito</mat-option>
                 <mat-option value="spei">SPEI</mat-option>
+              <mat-option value="oxxo_cash">OXXO / OpenPay</mat-option>
               </mat-select>
             </mat-form-field>
           </div>

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use MunicipalSaas\CaptureLines\Presentation\Http\Controllers\CaptureLineController;
+use MunicipalSaas\CaptureLines\Presentation\Http\Controllers\TreasuryCaptureLineController;
 use MunicipalSaas\Payments\Presentation\Http\Controllers\PaymentController;
 use MunicipalSaas\Predial\Presentation\Http\Controllers\PredialAccountController;
 use MunicipalSaas\Receipts\Presentation\Http\Controllers\ReceiptController;
@@ -22,6 +23,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::post('capture-lines', [CaptureLineController::class, 'store'])
         ->middleware('throttle:tenant-sensitive');
+    Route::get('capture-lines/{folio}/document', [CaptureLineController::class, 'document']);
 
     Route::post('payments', [PaymentController::class, 'store'])
         ->middleware('throttle:tenant-sensitive');
@@ -32,5 +34,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('treasury/dashboard', TreasuryDashboardController::class);
+        Route::post('treasury/capture-lines', [TreasuryCaptureLineController::class, 'store'])
+            ->middleware('throttle:tenant-sensitive');
     });
 });

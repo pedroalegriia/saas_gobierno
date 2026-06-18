@@ -20,7 +20,7 @@ final class CreatePaymentRequest extends FormRequest
         return [
             'capture_line_folio' => ['required', 'string', 'max:40'],
             'gateway' => ['required', Rule::in(['openpay', 'mercadopago', 'stripe'])],
-            'method' => ['required', Rule::in(['credit_card', 'debit_card', 'spei'])],
+            'method' => ['required', Rule::in(['credit_card', 'debit_card', 'spei', 'oxxo_cash'])],
             'payment_token' => ['required', 'string', 'max:255'],
         ];
     }
