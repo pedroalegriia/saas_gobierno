@@ -6,6 +6,7 @@ use MunicipalSaas\CaptureLines\Presentation\Http\Controllers\TreasuryCaptureLine
 use MunicipalSaas\Payments\Presentation\Http\Controllers\PaymentController;
 use MunicipalSaas\Predial\Presentation\Http\Controllers\PredialAccountController;
 use MunicipalSaas\Receipts\Presentation\Http\Controllers\ReceiptController;
+use MunicipalSaas\Reports\Presentation\Http\Controllers\ReportExportController;
 use MunicipalSaas\Reports\Presentation\Http\Controllers\TreasuryDashboardController;
 use MunicipalSaas\Tenants\Presentation\Http\Controllers\TenantController;
 use MunicipalSaas\TrafficFines\Presentation\Http\Controllers\TrafficFineController;
@@ -34,6 +35,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('treasury/dashboard', TreasuryDashboardController::class);
+        Route::get('treasury/reports/payments.csv', [ReportExportController::class, 'paymentsCsv']);
         Route::post('treasury/capture-lines', [TreasuryCaptureLineController::class, 'store'])
             ->middleware('throttle:tenant-sensitive');
     });

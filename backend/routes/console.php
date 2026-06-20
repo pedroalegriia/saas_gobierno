@@ -2,4 +2,4 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('queue:work --stop-when-empty')->everyMinute();
+Schedule::command('capture-lines:expire')->hourly();

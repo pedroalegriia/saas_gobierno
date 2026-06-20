@@ -25,7 +25,7 @@ final readonly class CreateCaptureLine
         }
 
         $year = (int) now()->format('Y');
-        $sequence = $this->captureLines->nextSequence($data->municipalityId, $data->serviceType, $year);
+        $sequence = $this->captureLines->reserveNextSequence($data->municipalityId, $data->serviceType, $year);
         $folio = sprintf(
             '%s-%s-%d%06d',
             strtoupper(substr($data->municipalitySlug, 0, 3)),

@@ -30,6 +30,7 @@ infra/          Docker, Nginx y Supervisor (opcional)
 - [Modelo de datos y diagrama ER](docs/database.md)
 - [OpenAPI](docs/openapi.yaml)
 - [Guia UI/UX corporativa](docs/ui-ux-guidelines.md)
+- [Flujos operativos](docs/operational-flows.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Fases sugeridas

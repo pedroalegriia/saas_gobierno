@@ -3,6 +3,7 @@
 namespace MunicipalSaas\CaptureLines\Infrastructure\Persistence\Eloquent;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use MunicipalSaas\CaptureLines\Application\DTO\CaptureLineData;
 use MunicipalSaas\CaptureLines\Application\Repositories\CaptureLineRepositoryInterface;
 use MunicipalSaas\Shared\Domain\Enums\CaptureLineStatus;
@@ -10,13 +11,40 @@ use MunicipalSaas\Shared\Domain\Enums\ServiceType;
 
 final readonly class EloquentCaptureLineRepository implements CaptureLineRepositoryInterface
 {
-    public function nextSequence(int $municipalityId, ServiceType $serviceType, int $year): int
+    public function reserveNextSequence(int $municipalityId, ServiceType $serviceType, int $year): int
     {
-        return CaptureLineModel::query()
-            ->where('municipality_id', $municipalityId)
-            ->where('service_type', $serviceType->value)
-            ->whereYear('created_at', $year)
-            ->count() + 1;
+        return DB::transaction(function () use ($municipalityId, $serviceType, $year): int {
+            $sequence = DB::table('folio_sequences')
+                ->where('municipality_id', $municipalityId)
+                ->where('service_type', $serviceType->value)
+                ->where('year', $year)
+                ->lockForUpdate()
+                ->first();
+
+            if ($sequence === null) {
+                DB::table('folio_sequences')->insert([
+                    'municipality_id' => $municipalityId,
+                    'service_type' => $serviceType->value,
+                    'year' => $year,
+                    'last_number' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return 1;
+            }
+
+            $next = (int) $sequence->last_number + 1;
+
+            DB::table('folio_sequences')
+                ->where('id', $sequence->id)
+                ->update([
+                    'last_number' => $next,
+                    'updated_at' => now(),
+                ]);
+
+            return $next;
+        });
     }
 
     public function create(

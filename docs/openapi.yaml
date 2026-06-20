@@ -215,6 +215,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TreasuryCaptureLineResponse"
+  /treasury/reports/payments.csv:
+    get:
+      tags: [Reports]
+      summary: Exporta pagos del municipio en CSV.
+      responses:
+        "200":
+          description: Archivo CSV de pagos
+          content:
+            text/csv:
+              schema:
+                type: string
 components:
   securitySchemes:
     bearerAuth:

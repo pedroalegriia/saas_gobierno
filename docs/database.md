@@ -69,6 +69,17 @@
 | expiration_date | date | Vigencia |
 | status | varchar(20) | PENDING, PAID, EXPIRED, CANCELLED |
 
+### folio_sequences
+
+| Campo | Tipo | Notas |
+| --- | --- | --- |
+| id | bigint unsigned | PK |
+| municipality_id | bigint unsigned | FK municipalities |
+| service_type | varchar(20) | PREDIAL, WATER, TRAFFIC_FINE |
+| year | smallint unsigned | Ejercicio fiscal |
+| last_number | int unsigned | Ultimo consecutivo reservado |
+| created_at / updated_at | timestamps | Auditoria tecnica |
+
 ### payments
 
 | Campo | Tipo | Notas |
@@ -122,6 +133,7 @@
 - `traffic_fines (municipality_id, plate)`.
 - `capture_lines.folio` unico.
 - `capture_lines (municipality_id, service_type, service_id)`.
+- `folio_sequences (municipality_id, service_type, year)` unico.
 - `payments.reference` unico nullable.
 - `receipts.folio` unico.
 - `audit_logs (municipality_id, created_at)`.

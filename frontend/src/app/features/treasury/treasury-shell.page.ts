@@ -85,5 +85,6 @@ export class TreasuryShellPage {
     { path: ['/tesoreria', 'pagos'], label: 'Pagos', icon: 'payments' },
     { path: ['/tesoreria', 'adeudos'], label: 'Adeudos', icon: 'pending_actions' },
     { path: ['/tesoreria', 'recibos'], label: 'Recibos', icon: 'receipt_long' },
+    { path: ['/tesoreria', 'reportes'], label: 'Reportes', icon: 'download' },
   ];
 }

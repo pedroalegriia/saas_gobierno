@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -54,10 +54,16 @@ import { Payment } from '../../core/models/payment.model';
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Token de pago</mat-label>
-            <input matInput formControlName="paymentToken">
-          </mat-form-field>
+          @if (requiresPaymentToken()) {
+            <mat-form-field appearance="outline">
+              <mat-label>Token de pago</mat-label>
+              <input matInput formControlName="paymentToken">
+            </mat-form-field>
+          } @else {
+            <div class="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-slate-700">
+              Se generara una referencia OpenPay para pagar en OXXO. No necesitas token de tarjeta.
+            </div>
+          }
 
           <button mat-flat-button color="primary" class="corporate-button" type="submit" [disabled]="form.invalid || loading()">
             @if (loading()) {
@@ -117,6 +123,7 @@ export class PaymentPage {
   protected readonly loading = signal(false);
   protected readonly message = signal('');
   protected readonly payment = signal<Payment | null>(null);
+  protected readonly requiresPaymentToken = computed(() => this.form.controls.method.value !== 'oxxo_cash');
   protected readonly securityBadges = [
     { icon: 'lock', label: 'Tokenizacion segura' },
     { icon: 'account_balance', label: 'Gateway certificado' },
@@ -136,7 +143,7 @@ export class PaymentPage {
       this.folio(),
       this.form.controls.gateway.value,
       this.form.controls.method.value,
-      this.form.controls.paymentToken.value,
+      this.requiresPaymentToken() ? this.form.controls.paymentToken.value : '',
     ).subscribe({
       next: (response) => {
         this.payment.set(response.data);

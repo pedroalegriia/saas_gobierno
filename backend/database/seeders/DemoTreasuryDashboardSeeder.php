@@ -24,6 +24,12 @@ final class DemoTreasuryDashboardSeeder extends Seeder
             'updated_at',
         ]);
 
+        DB::table('folio_sequences')->upsert([
+            $this->folioSequence('PREDIAL', 2026, 6),
+            $this->folioSequence('WATER', 2026, 5),
+            $this->folioSequence('TRAFFIC_FINE', 2026, 3),
+        ], ['municipality_id', 'service_type', 'year'], ['last_number', 'updated_at']);
+
         DB::table('payments')->upsert($this->payments($today), ['reference'], [
             'municipality_id',
             'capture_line_id',
@@ -191,6 +197,18 @@ final class DemoTreasuryDashboardSeeder extends Seeder
             'paid_at' => $paidAt,
             'metadata' => json_encode(['demo' => true, 'presentation' => 'colima']),
             'created_at' => $paidAt,
+            'updated_at' => now(),
+        ];
+    }
+
+    private function folioSequence(string $serviceType, int $year, int $lastNumber): array
+    {
+        return [
+            'municipality_id' => self::MUNICIPALITY_ID,
+            'service_type' => $serviceType,
+            'year' => $year,
+            'last_number' => $lastNumber,
+            'created_at' => now(),
             'updated_at' => now(),
         ];
     }

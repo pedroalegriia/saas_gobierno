@@ -2,6 +2,7 @@
 
 namespace MunicipalSaas\CaptureLines\Presentation\Http\Controllers;
 
+use App\Policies\TreasuryPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -16,11 +17,16 @@ final readonly class TreasuryCaptureLineController
 {
     public function __construct(
         private CreateCaptureLine $createCaptureLine,
+        private TreasuryPolicy $treasuryPolicy,
     ) {
     }
 
     public function store(CreateTreasuryCaptureLineRequest $request): JsonResponse
     {
+        if (! $request->user() || ! $this->treasuryPolicy->generateCaptureLine($request->user(), $request->attributes->get('tenant'))) {
+            return new JsonResponse(['message' => 'No autorizado para generar lineas de captura.'], 403);
+        }
+
         $serviceType = ServiceType::from((string) $request->validated('service_type'));
         $lookup = trim((string) $request->validated('lookup'));
         $municipalityId = (int) $request->attributes->get('tenant_id');
@@ -45,6 +51,22 @@ final readonly class TreasuryCaptureLineController
         if ((bool) ($request->validated('include_oxxo_reference') ?? true)) {
             $oxxoReference = $this->ensureOpenPayOxxoReference($municipalityId, $captureLine->id, $captureLine->folio, $captureLine->amount);
         }
+
+        DB::table('audit_logs')->insert([
+            'municipality_id' => $municipalityId,
+            'user_id' => $request->user()?->id,
+            'action' => 'capture_line.generated',
+            'entity' => 'capture_lines',
+            'entity_id' => $captureLine->folio,
+            'old_value' => null,
+            'new_value' => json_encode([
+                'service_type' => $serviceType->value,
+                'lookup' => $lookup,
+                'openpay_reference' => $oxxoReference['reference'] ?? null,
+            ]),
+            'ip' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return new JsonResponse([
             'capture_line' => (new CaptureLineResource($captureLine))->resolve($request),

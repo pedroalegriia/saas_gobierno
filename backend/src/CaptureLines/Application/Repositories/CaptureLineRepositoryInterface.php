@@ -7,7 +7,7 @@ use MunicipalSaas\Shared\Domain\Enums\ServiceType;
 
 interface CaptureLineRepositoryInterface
 {
-    public function nextSequence(int $municipalityId, ServiceType $serviceType, int $year): int;
+    public function reserveNextSequence(int $municipalityId, ServiceType $serviceType, int $year): int;
 
     public function create(
         int $municipalityId,

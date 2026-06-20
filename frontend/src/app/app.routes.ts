@@ -52,6 +52,10 @@ export const routes: Routes = [
         path: 'recibos',
         loadComponent: () => import('./features/treasury/treasury-receipts.page').then((m) => m.TreasuryReceiptsPage),
       },
+      {
+        path: 'reportes',
+        loadComponent: () => import('./features/treasury/treasury-reports.page').then((m) => m.TreasuryReportsPage),
+      },
     ],
   },
   {
