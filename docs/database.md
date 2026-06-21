@@ -123,6 +123,22 @@
 | ip | varchar(45), nullable | IPv4/IPv6 |
 | created_at | timestamp | Fecha |
 
+### payment_webhook_events
+
+| Campo | Tipo | Notas |
+| --- | --- | --- |
+| id | bigint unsigned | PK |
+| municipality_id | bigint unsigned, nullable | Tenant resuelto |
+| gateway | varchar(40) | openpay, mercadopago, stripe |
+| event_id | varchar(120), nullable | Id externo del evento |
+| payment_reference | varchar(120), nullable | Referencia local de pago |
+| status | varchar(30) | RECEIVED, PROCESSED, FAILED, INVALID_SIGNATURE |
+| headers | json, nullable | Headers recibidos |
+| payload | longtext | Body raw |
+| error_message | text, nullable | Error de procesamiento |
+| processed_at | timestamp, nullable | Fecha de proceso |
+| created_at / updated_at | timestamps | Auditoria tecnica |
+
 ## Indices principales
 
 - `municipalities.slug` unico.
@@ -137,6 +153,8 @@
 - `payments.reference` unico nullable.
 - `receipts.folio` unico.
 - `audit_logs (municipality_id, created_at)`.
+- `payment_webhook_events.event_id`.
+- `payment_webhook_events.payment_reference`.
 
 ## Diagrama ER
 

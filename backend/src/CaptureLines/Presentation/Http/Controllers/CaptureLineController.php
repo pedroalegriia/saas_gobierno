@@ -51,6 +51,7 @@ final readonly class CaptureLineController
 
         $municipality = $request->attributes->get('tenant');
         $paymentLink = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:4200')), '/') . '/pagar/' . $captureLine->folio;
+        $this->auditDocument($request, $captureLine->folio, 'capture_line.document_viewed');
 
         return new Response($this->htmlDocument(
             municipalityName: $municipality->name,
@@ -89,6 +90,7 @@ final readonly class CaptureLineController
             'citizen_name' => $service['name'],
             'citizen_reference' => $service['reference'],
         ]);
+        $this->auditDocument($request, $captureLine->folio, 'capture_line.pdf_reprinted');
 
         return new Response($pdf, 200, [
             'Content-Type' => 'application/pdf',
@@ -175,5 +177,23 @@ HTML;
             'name' => $row->name ?? 'Contribuyente',
             'reference' => $row->reference ?? 'N/A',
         ];
+    }
+
+    private function auditDocument(Request $request, string $folio, string $action): void
+    {
+        DB::table('audit_logs')->insert([
+            'municipality_id' => $request->attributes->get('tenant_id'),
+            'user_id' => $request->user()?->id,
+            'action' => $action,
+            'entity' => 'capture_lines',
+            'entity_id' => $folio,
+            'old_value' => null,
+            'new_value' => json_encode([
+                'folio' => $folio,
+                'user_agent' => $request->userAgent(),
+            ]),
+            'ip' => $request->ip(),
+            'created_at' => now(),
+        ]);
     }
 }

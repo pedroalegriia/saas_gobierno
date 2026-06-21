@@ -35,11 +35,13 @@ status=PENDING
 
 Cuando el webhook confirma el pago, el backend:
 
-1. Busca `payments.reference`.
-2. Marca el pago como `PAID`.
-3. Marca la linea de captura como `PAID`.
-4. Guarda el payload del webhook en `payments.metadata`.
-5. Emite automaticamente un recibo si todavia no existe.
+1. Registra el evento en `payment_webhook_events`.
+2. Busca `payments.reference`.
+3. Marca el pago como `PAID`.
+4. Marca la linea de captura como `PAID`.
+5. Guarda el payload del webhook en `payments.metadata`.
+6. Emite automaticamente un recibo si todavia no existe.
+7. Actualiza el evento webhook como `PROCESSED` o `FAILED`.
 
 OpenPay puede operar en dos modos:
 
@@ -67,6 +69,19 @@ contra el body crudo usando los headers `X-OpenPay-Signature`,
 - El folio puede ser folio de recibo o referencia de pago.
 - El PDF incluye branding municipal, matriz QR local/offline de verificacion y codigo de barras
   visual del folio.
+- Cada descarga/reimpresion registra auditoria `receipt.reprinted`.
+
+## Auditoria
+
+Se registran eventos funcionales en `audit_logs`:
+
+- `auth.login_success`
+- `auth.login_failed`
+- `auth.login_denied`
+- `capture_line.generated`
+- `capture_line.document_viewed`
+- `capture_line.pdf_reprinted`
+- `receipt.reprinted`
 
 ## Reportes
 

@@ -50,6 +50,21 @@ final readonly class ReceiptController
             'payment_reference' => $receipt->payment_reference,
             'verification_url' => $verificationUrl,
         ]);
+        DB::table('audit_logs')->insert([
+            'municipality_id' => $request->attributes->get('tenant_id'),
+            'user_id' => $request->user()?->id,
+            'action' => 'receipt.reprinted',
+            'entity' => 'receipts',
+            'entity_id' => $receipt->folio,
+            'old_value' => null,
+            'new_value' => json_encode([
+                'folio' => $receipt->folio,
+                'payment_reference' => $receipt->payment_reference,
+                'user_agent' => $request->userAgent(),
+            ]),
+            'ip' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return new Response($pdf, 200, [
             'Content-Type' => 'application/pdf',
