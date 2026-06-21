@@ -73,7 +73,7 @@ final readonly class TreasuryCaptureLineController
             'citizen' => $service,
             'delivery' => [
                 'payment_link' => rtrim((string) config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:4200')), '/') . '/pagar/' . $captureLine->folio,
-                'document_url' => rtrim((string) config('app.url'), '/') . '/api/v1/capture-lines/' . $captureLine->folio . '/document',
+                'document_url' => rtrim((string) config('app.url'), '/') . '/api/v1/capture-lines/' . $captureLine->folio . '/pdf',
                 'expires_at' => $captureLine->expirationDate,
             ],
             'openpay' => $oxxoReference,

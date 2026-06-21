@@ -187,6 +187,24 @@ paths:
               schema:
                 type: string
                 format: binary
+  /capture-lines/{folio}/pdf:
+    get:
+      tags: [CaptureLines]
+      summary: Descarga PDF oficial de linea de captura.
+      parameters:
+        - name: folio
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF de linea de captura
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
   /treasury/dashboard:
     get:
       tags: [Reports]

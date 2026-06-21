@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('capture-lines', [CaptureLineController::class, 'store'])
         ->middleware('throttle:tenant-sensitive');
     Route::get('capture-lines/{folio}/document', [CaptureLineController::class, 'document']);
+    Route::get('capture-lines/{folio}/pdf', [CaptureLineController::class, 'pdf']);
 
     Route::post('payments', [PaymentController::class, 'store'])
         ->middleware('throttle:tenant-sensitive');
