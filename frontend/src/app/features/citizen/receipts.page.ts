@@ -5,6 +5,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { CitizenHistoryService } from '../../core/services/citizen-history.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-receipts-page',
@@ -28,12 +30,12 @@ import { MatInputModule } from '@angular/material/input';
         <p class="section-eyebrow">Buscar recibo</p>
         <h2 class="m-0 text-3xl font-black">Ingresa tu folio</h2>
         <p class="mt-3 leading-7 text-slate-500">
-          Puedes usar el folio de recibo o referencia de pago generada por el sistema.
+          Puedes usar folio de recibo, referencia de pago, correo o telefono si el dato existe en tu historial local.
         </p>
 
         <form class="form-shell mt-6" [formGroup]="form" (ngSubmit)="download()">
           <mat-form-field appearance="outline">
-            <mat-label>Folio de recibo o pago</mat-label>
+            <mat-label>Folio, referencia, correo o telefono</mat-label>
             <input matInput formControlName="folio">
           </mat-form-field>
           <button mat-flat-button color="primary" class="corporate-button" type="submit" [disabled]="form.invalid">
@@ -53,14 +55,19 @@ import { MatInputModule } from '@angular/material/input';
 })
 export class ReceiptsPage {
   private readonly fb = inject(FormBuilder);
+  private readonly history = inject(CitizenHistoryService);
+  private readonly toast = inject(ToastService);
   protected readonly message = signal('');
   protected readonly form = this.fb.nonNullable.group({
     folio: ['', Validators.required],
   });
 
   protected download(): void {
-    const folio = encodeURIComponent(this.form.controls.folio.value.trim());
+    const query = this.form.controls.folio.value.trim();
+    const localMatch = this.history.search(query)[0];
+    const folio = encodeURIComponent(localMatch?.paymentReference ?? localMatch?.folio ?? query);
     this.message.set('Abriendo recibo...');
+    this.toast.info('Abriendo recibo oficial.');
     window.open(`/api/v1/receipts/${folio}`, '_blank', 'noopener');
   }
 }

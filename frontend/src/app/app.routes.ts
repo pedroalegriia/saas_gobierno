@@ -19,6 +19,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/citizen/receipts.page').then((m) => m.ReceiptsPage),
   },
   {
+    path: 'historial',
+    loadComponent: () => import('./features/citizen/citizen-history.page').then((m) => m.CitizenHistoryPage),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage),
   },

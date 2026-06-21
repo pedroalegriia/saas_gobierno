@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { ReportsService, TreasuryDashboard } from '../../core/services/reports.service';
 
 @Component({
   selector: 'app-treasury-receipts-page',
-  imports: [MatCardModule, MatIconModule],
+  imports: [MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
     <mat-card class="government-card">
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -15,9 +17,19 @@ import { ReportsService, TreasuryDashboard } from '../../core/services/reports.s
         </div>
         <span class="status-chip">PDF oficial</span>
       </div>
+      <mat-form-field appearance="outline" class="mt-5">
+        <mat-label>Filtrar recibos</mat-label>
+        <input matInput (input)="query.set($any($event.target).value)">
+      </mat-form-field>
+      @if (!dashboard()) {
+        <div class="mt-6 grid gap-3 md:grid-cols-2">
+          <div class="skeleton h-24"></div>
+          <div class="skeleton h-24"></div>
+        </div>
+      }
 
       <div class="mt-6 grid gap-3 md:grid-cols-2">
-        @for (row of issuedReceipts(); track row.title) {
+        @for (row of filteredReceipts(); track row.title) {
           <div class="operation-row">
             <div class="operation-copy">
               <span class="operation-icon"><mat-icon>{{ row.icon }}</mat-icon></span>
@@ -91,6 +103,18 @@ export class TreasuryReceiptsPage {
   private readonly reports = inject(ReportsService);
   protected readonly dashboard = signal<TreasuryDashboard | null>(null);
   protected readonly issuedReceipts = computed(() => this.dashboard()?.tables.issued_receipts ?? []);
+  protected readonly query = signal('');
+  protected readonly filteredReceipts = computed(() => {
+    const normalized = this.query().trim().toLowerCase();
+    if (!normalized) {
+      return this.issuedReceipts();
+    }
+
+    return this.issuedReceipts().filter((row) =>
+      row.title.toLowerCase().includes(normalized)
+      || row.subtitle.toLowerCase().includes(normalized),
+    );
+  });
 
   constructor() {
     this.reports.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));

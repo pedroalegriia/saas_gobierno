@@ -9,6 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { PaymentsService } from '../../core/services/payments.service';
 import { Payment } from '../../core/models/payment.model';
+import { CitizenHistoryService } from '../../core/services/citizen-history.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-payment-page',
@@ -100,6 +103,14 @@ import { Payment } from '../../core/models/payment.model';
                 <dd class="font-extrabold">{{ paid.status }}</dd>
               </div>
             </dl>
+            <div class="mt-5 grid gap-3">
+              <button mat-stroked-button class="corporate-button" type="button" (click)="shareWhatsApp(paid)">
+                Compartir por WhatsApp
+              </button>
+              <a mat-flat-button color="primary" class="corporate-button" [href]="'/api/v1/receipts/' + (paid.reference ?? folio())" target="_blank" rel="noopener">
+                Descargar recibo
+              </a>
+            </div>
           </div>
         } @else {
           <p class="mt-5 leading-7 text-slate-500">
@@ -119,6 +130,9 @@ export class PaymentPage {
 
   private readonly fb = inject(FormBuilder);
   private readonly payments = inject(PaymentsService);
+  private readonly history = inject(CitizenHistoryService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toast = inject(ToastService);
 
   protected readonly loading = signal(false);
   protected readonly message = signal('');
@@ -136,23 +150,47 @@ export class PaymentPage {
   });
 
   protected pay(): void {
-    this.loading.set(true);
-    this.message.set('');
+    this.confirmDialog.confirm({
+      title: 'Confirmar pago',
+      message: `Se iniciara el pago de la linea ${this.folio()} con ${this.form.controls.gateway.value}.`,
+      confirmLabel: 'Continuar',
+    }).subscribe((confirmed) => {
+      if (!confirmed) {
+        return;
+      }
 
-    this.payments.pay(
-      this.folio(),
-      this.form.controls.gateway.value,
-      this.form.controls.method.value,
-      this.requiresPaymentToken() ? this.form.controls.paymentToken.value : '',
-    ).subscribe({
-      next: (response) => {
-        this.payment.set(response.data);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.message.set('No fue posible procesar el pago.');
-        this.loading.set(false);
-      },
+      this.loading.set(true);
+      this.message.set('');
+
+      this.payments.pay(
+        this.folio(),
+        this.form.controls.gateway.value,
+        this.form.controls.method.value,
+        this.requiresPaymentToken() ? this.form.controls.paymentToken.value : '',
+      ).subscribe({
+        next: (response) => {
+          this.payment.set(response.data);
+          this.history.add({
+            folio: this.folio(),
+            amount: response.data.amount,
+            status: response.data.status,
+            paymentReference: response.data.reference,
+            createdAt: new Date().toISOString(),
+          });
+          this.toast.success('Pago registrado. Puedes descargar o compartir el comprobante.');
+          this.loading.set(false);
+        },
+        error: () => {
+          this.message.set('No fue posible procesar el pago. Puedes intentar nuevamente.');
+          this.toast.error('No fue posible procesar el pago.');
+          this.loading.set(false);
+        },
+      });
     });
+  }
+
+  protected shareWhatsApp(payment: Payment): void {
+    const text = `Pago municipal ${this.folio()} - referencia ${payment.reference ?? 'pendiente'} - estatus ${payment.status}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 }

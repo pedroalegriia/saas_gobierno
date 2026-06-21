@@ -1,12 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { PaymentBreakdown, ReportsService, TreasuryDashboard } from '../../core/services/reports.service';
 
 @Component({
   selector: 'app-treasury-payments-page',
-  imports: [MatCardModule, MatIconModule, NgTemplateOutlet],
+  imports: [MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, NgTemplateOutlet],
   template: `
     <section class="grid gap-4 xl:grid-cols-2">
       <mat-card class="government-card">
@@ -42,8 +44,18 @@ import { PaymentBreakdown, ReportsService, TreasuryDashboard } from '../../core/
         </div>
         <span class="status-chip">Pagos</span>
       </div>
+      <mat-form-field appearance="outline" class="mt-5">
+        <mat-label>Filtrar por folio, referencia o servicio</mat-label>
+        <input matInput (input)="query.set($any($event.target).value)">
+      </mat-form-field>
+      @if (!dashboard()) {
+        <div class="mt-6 grid gap-3 md:grid-cols-2">
+          <div class="skeleton h-24"></div>
+          <div class="skeleton h-24"></div>
+        </div>
+      }
       <div class="mt-6 grid gap-3 md:grid-cols-2">
-        @for (row of latestPayments(); track row.reference ?? row.title) {
+        @for (row of filteredPayments(); track row.reference ?? row.title) {
           <ng-container [ngTemplateOutlet]="rowTpl" [ngTemplateOutletContext]="{ row }" />
         } @empty {
           <p class="empty-state">Aun no hay pagos confirmados para este municipio.</p>
@@ -181,6 +193,19 @@ export class TreasuryPaymentsPage {
   protected readonly paymentMethods = computed(() => this.dashboard()?.charts.payment_methods ?? []);
   protected readonly paymentGateways = computed(() => this.dashboard()?.charts.payment_gateways ?? []);
   protected readonly latestPayments = computed(() => this.dashboard()?.tables.latest_payments ?? []);
+  protected readonly query = signal('');
+  protected readonly filteredPayments = computed(() => {
+    const normalized = this.query().trim().toLowerCase();
+    if (!normalized) {
+      return this.latestPayments();
+    }
+
+    return this.latestPayments().filter((row) =>
+      row.title.toLowerCase().includes(normalized)
+      || row.subtitle.toLowerCase().includes(normalized)
+      || (row.reference ?? '').toLowerCase().includes(normalized),
+    );
+  });
 
   constructor() {
     this.reports.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));

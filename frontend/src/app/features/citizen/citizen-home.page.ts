@@ -180,5 +180,11 @@ export class CitizenHomePage {
       icon: 'receipt_long',
       route: ['/recibos'],
     },
+    {
+      title: 'Mi Historial',
+      description: 'Reintenta pagos y consulta referencias guardadas en este navegador.',
+      icon: 'history',
+      route: ['/historial'],
+    },
   ];
 }

@@ -52,6 +52,14 @@ Cuando el webhook confirma el pago, el backend:
 El endpoint protegido `/api/v1/treasury/reports/payments.csv` exporta pagos del
 tenant en CSV. La autorizacion usa `TreasuryPolicy::exportReports`.
 
+## UX local
+
+- El portal ciudadano guarda historial reciente en `localStorage`.
+- Desde el historial se puede reintentar un pago o abrir el recibo.
+- El pago exitoso permite compartir referencia por WhatsApp.
+- Tesoreria incluye filtros locales en pagos, adeudos y recibos.
+- Las listas muestran skeleton loaders durante carga inicial.
+
 ## Roles
 
 - `super_admin`: acceso global.
