@@ -63,6 +63,17 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'admin',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/admin-shell.page').then((m) => m.AdminShellPage),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'metricas' },
+      { path: 'metricas', loadComponent: () => import('./features/admin/admin-metrics.page').then((m) => m.AdminMetricsPage) },
+      { path: 'municipios', loadComponent: () => import('./features/admin/admin-municipalities.page').then((m) => m.AdminMunicipalitiesPage) },
+      { path: 'usuarios', loadComponent: () => import('./features/admin/admin-users.page').then((m) => m.AdminUsersPage) },
+    ],
+  },
+  {
     path: '**',
     redirectTo: '',
   },

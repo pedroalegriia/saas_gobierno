@@ -250,6 +250,77 @@ paths:
             text/csv:
               schema:
                 type: string
+  /treasury/reports/payments.pdf:
+    get:
+      tags: [Reports]
+      summary: Exporta pagos del municipio en PDF.
+      responses:
+        "200":
+          description: Archivo PDF de pagos
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /super-admin/metrics:
+    get:
+      tags: [Tenants]
+      summary: Obtiene metricas globales SaaS para Super Admin.
+      responses:
+        "200":
+          description: Metricas globales
+  /super-admin/municipalities:
+    get:
+      tags: [Tenants]
+      summary: Lista municipios.
+      responses:
+        "200":
+          description: Municipios
+    post:
+      tags: [Tenants]
+      summary: Crea municipio.
+      responses:
+        "201":
+          description: Municipio creado
+  /super-admin/municipalities/{municipality}:
+    put:
+      tags: [Tenants]
+      summary: Actualiza municipio.
+      parameters:
+        - name: municipality
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Municipio actualizado
+  /super-admin/users:
+    get:
+      tags: [Auth]
+      summary: Lista usuarios.
+      responses:
+        "200":
+          description: Usuarios
+    post:
+      tags: [Auth]
+      summary: Crea usuario.
+      responses:
+        "201":
+          description: Usuario creado
+  /super-admin/users/{user}:
+    put:
+      tags: [Auth]
+      summary: Actualiza usuario.
+      parameters:
+        - name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Usuario actualizado
 components:
   securitySchemes:
     bearerAuth:

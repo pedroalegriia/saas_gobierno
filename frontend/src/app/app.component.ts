@@ -24,6 +24,7 @@ import { TenantService } from './core/services/tenant.service';
 
         <nav class="nav-actions" aria-label="Navegacion principal">
           <a mat-button routerLink="/recibos">Recibos</a>
+          <a mat-button routerLink="/admin">Admin</a>
           <a mat-flat-button class="treasury-cta" routerLink="/login">Tesoreria</a>
         </nav>
       </div>

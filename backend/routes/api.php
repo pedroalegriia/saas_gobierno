@@ -9,7 +9,10 @@ use MunicipalSaas\Receipts\Presentation\Http\Controllers\ReceiptController;
 use MunicipalSaas\Reports\Presentation\Http\Controllers\ReportExportController;
 use MunicipalSaas\Reports\Presentation\Http\Controllers\TreasuryDashboardController;
 use MunicipalSaas\Tenants\Presentation\Http\Controllers\TenantController;
+use MunicipalSaas\Tenants\Presentation\Http\Controllers\AdminGlobalMetricsController;
+use MunicipalSaas\Tenants\Presentation\Http\Controllers\AdminMunicipalityController;
 use MunicipalSaas\TrafficFines\Presentation\Http\Controllers\TrafficFineController;
+use MunicipalSaas\Users\Presentation\Http\Controllers\AdminUserController;
 use MunicipalSaas\Users\Presentation\Http\Controllers\AuthController;
 use MunicipalSaas\Water\Presentation\Http\Controllers\WaterAccountController;
 
@@ -37,7 +40,16 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('treasury/dashboard', TreasuryDashboardController::class);
         Route::get('treasury/reports/payments.csv', [ReportExportController::class, 'paymentsCsv']);
+        Route::get('treasury/reports/payments.pdf', [ReportExportController::class, 'paymentsPdf']);
         Route::post('treasury/capture-lines', [TreasuryCaptureLineController::class, 'store'])
             ->middleware('throttle:tenant-sensitive');
+
+        Route::get('super-admin/metrics', AdminGlobalMetricsController::class);
+        Route::get('super-admin/municipalities', [AdminMunicipalityController::class, 'index']);
+        Route::post('super-admin/municipalities', [AdminMunicipalityController::class, 'store']);
+        Route::put('super-admin/municipalities/{municipality}', [AdminMunicipalityController::class, 'update']);
+        Route::get('super-admin/users', [AdminUserController::class, 'index']);
+        Route::post('super-admin/users', [AdminUserController::class, 'store']);
+        Route::put('super-admin/users/{user}', [AdminUserController::class, 'update']);
     });
 });

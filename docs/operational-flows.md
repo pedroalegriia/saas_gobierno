@@ -73,6 +73,26 @@ contra el body crudo usando los headers `X-OpenPay-Signature`,
 El endpoint protegido `/api/v1/treasury/reports/payments.csv` exporta pagos del
 tenant en CSV. La autorizacion usa `TreasuryPolicy::exportReports`.
 
+Tambien existe `/api/v1/treasury/reports/payments.pdf`. Ambos aceptan filtros:
+
+```text
+from, to, service_type, gateway, method, status
+```
+
+## Super Admin
+
+El modulo `/admin` permite:
+
+- Consultar metricas globales SaaS.
+- Crear y editar municipios, branding, dominio y estatus.
+- Crear y editar usuarios con rol y estatus.
+
+Endpoints:
+
+- `/api/v1/super-admin/metrics`
+- `/api/v1/super-admin/municipalities`
+- `/api/v1/super-admin/users`
+
 ## UX local
 
 - El portal ciudadano guarda historial reciente en `localStorage`.
