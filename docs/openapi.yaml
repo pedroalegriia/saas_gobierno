@@ -157,7 +157,7 @@ paths:
   /payments/webhooks/{gateway}:
     post:
       tags: [Payments]
-      summary: Recibe webhooks de gateways.
+      summary: Recibe webhooks de gateways y confirma pagos.
       security: []
       parameters:
         - name: gateway
@@ -166,6 +166,12 @@ paths:
           schema:
             type: string
             enum: [openpay, mercadopago, stripe]
+        - name: X-OpenPay-Signature
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Firma HMAC SHA-256 opcional cuando OPENPAY_WEBHOOK_SECRET esta configurado.
       responses:
         "202":
           description: Webhook aceptado
@@ -330,7 +336,7 @@ components:
         status: { type: string, enum: [PENDING, PAID, EXPIRED, CANCELLED] }
     CreatePaymentRequest:
       type: object
-      required: [capture_line_folio, gateway, method, payment_token]
+      required: [capture_line_folio, gateway, method]
       properties:
         capture_line_folio: { type: string }
         gateway:
@@ -339,7 +345,9 @@ components:
         method:
           type: string
           enum: [credit_card, debit_card, spei, oxxo_cash]
-        payment_token: { type: string }
+        payment_token:
+          type: string
+          description: Requerido para tarjeta; no aplica para oxxo_cash.
     Payment:
       type: object
       properties:

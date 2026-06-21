@@ -3,6 +3,7 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     bash \
     $PHPIZE_DEPS \
+    curl-dev \
     icu-dev \
     libzip-dev \
     oniguruma-dev \
@@ -10,6 +11,7 @@ RUN apk add --no-cache \
     zip \
   && docker-php-ext-install \
     bcmath \
+    curl \
     intl \
     mbstring \
     opcache \

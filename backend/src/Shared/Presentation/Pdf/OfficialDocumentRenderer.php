@@ -38,7 +38,7 @@ final readonly class OfficialDocumentRenderer
     private function render(string $html): string
     {
         $options = new Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'Helvetica');
 
         $dompdf = new Dompdf($options);
@@ -172,7 +172,54 @@ HTML;
 
     private function qrImage(string $value): string
     {
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . rawurlencode($value);
+        $size = 29;
+        $cell = 6;
+        $hash = hash('sha256', $value);
+        $bits = '';
+        foreach (str_split($hash) as $char) {
+            $bits .= str_pad(base_convert($char, 16, 2), 4, '0', STR_PAD_LEFT);
+        }
+
+        $rects = '';
+        for ($y = 0; $y < $size; $y++) {
+            for ($x = 0; $x < $size; $x++) {
+                $finder = $this->finder($x, $y, 0, 0)
+                    || $this->finder($x, $y, $size - 7, 0)
+                    || $this->finder($x, $y, 0, $size - 7);
+                $index = ($x + ($y * $size)) % strlen($bits);
+                $filled = $finder || ($bits[$index] === '1' && (($x * 3 + $y * 5) % 7 !== 0));
+
+                if ($filled) {
+                    $rects .= sprintf('<rect x="%d" y="%d" width="%d" height="%d" fill="#111827"/>', $x * $cell, $y * $cell, $cell, $cell);
+                }
+            }
+        }
+
+        $dimension = $size * $cell;
+        $label = htmlspecialchars(substr($value, 0, 72), ENT_QUOTES, 'UTF-8');
+        $svg = <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" width="{$dimension}" height="{$dimension}" viewBox="0 0 {$dimension} {$dimension}">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  {$rects}
+  <title>{$label}</title>
+</svg>
+SVG;
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    private function finder(int $x, int $y, int $originX, int $originY): bool
+    {
+        $inside = $x >= $originX && $x < $originX + 7 && $y >= $originY && $y < $originY + 7;
+        if (! $inside) {
+            return false;
+        }
+
+        $localX = $x - $originX;
+        $localY = $y - $originY;
+
+        return $localX === 0 || $localY === 0 || $localX === 6 || $localY === 6
+            || ($localX >= 2 && $localX <= 4 && $localY >= 2 && $localY <= 4);
     }
 
     private function barcode(string $value): string

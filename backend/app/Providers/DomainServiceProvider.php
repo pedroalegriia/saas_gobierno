@@ -11,6 +11,7 @@ use MunicipalSaas\Payments\Application\Gateways\PaymentGatewayInterface;
 use MunicipalSaas\Payments\Application\Repositories\PaymentRepositoryInterface;
 use MunicipalSaas\Payments\Infrastructure\Gateways\CompositePaymentGateway;
 use MunicipalSaas\Payments\Infrastructure\Gateways\MercadoPagoPaymentGateway;
+use MunicipalSaas\Payments\Infrastructure\Gateways\OpenPayApiClient;
 use MunicipalSaas\Payments\Infrastructure\Gateways\OpenPayPaymentGateway;
 use MunicipalSaas\Payments\Infrastructure\Gateways\StripePaymentGateway;
 use MunicipalSaas\Payments\Infrastructure\Persistence\Eloquent\EloquentPaymentRepository;
@@ -35,7 +36,7 @@ final class DomainServiceProvider extends ServiceProvider
         $this->app->bind(PaymentRepositoryInterface::class, EloquentPaymentRepository::class);
         $this->app->bind(ServiceDebtResolverInterface::class, EloquentServiceDebtResolver::class);
         $this->app->singleton(PaymentGatewayInterface::class, fn () => new CompositePaymentGateway([
-            new OpenPayPaymentGateway(),
+            new OpenPayPaymentGateway(new OpenPayApiClient()),
             new MercadoPagoPaymentGateway(),
             new StripePaymentGateway(),
         ]));

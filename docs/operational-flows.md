@@ -8,8 +8,8 @@
 - El comando `php artisan capture-lines:expire` vence lineas `PENDING` con
   `expiration_date` anterior al dia actual y falla pagos pendientes asociados.
 - El PDF oficial se descarga desde `/api/v1/capture-lines/{folio}/pdf`.
-- El PDF incluye branding municipal, QR al link de pago y codigo de barras
-  visual del folio.
+- El PDF incluye branding municipal, matriz QR local/offline al link de pago y
+  codigo de barras visual del folio.
 
 ## Tesoreria
 
@@ -39,12 +39,33 @@ Cuando el webhook confirma el pago, el backend:
 2. Marca el pago como `PAID`.
 3. Marca la linea de captura como `PAID`.
 4. Guarda el payload del webhook en `payments.metadata`.
+5. Emite automaticamente un recibo si todavia no existe.
+
+OpenPay puede operar en dos modos:
+
+```dotenv
+OPENPAY_ENABLED=false # fallback local/simulado
+OPENPAY_ENABLED=true  # llamadas REST reales a OpenPay
+```
+
+Para modo real se requiere extension PHP `curl` y estas variables:
+
+```dotenv
+OPENPAY_MERCHANT_ID=
+OPENPAY_PRIVATE_KEY=
+OPENPAY_PUBLIC_KEY=
+OPENPAY_WEBHOOK_SECRET=
+```
+
+Cuando `OPENPAY_WEBHOOK_SECRET` tiene valor, el webhook valida firma HMAC SHA-256
+contra el body crudo usando los headers `X-OpenPay-Signature`,
+`X-Openpay-Signature` u `OpenPay-Signature`.
 
 ## Recibos oficiales
 
 - El endpoint `/api/v1/receipts/{folio}` devuelve un PDF oficial.
 - El folio puede ser folio de recibo o referencia de pago.
-- El PDF incluye branding municipal, QR de verificacion y codigo de barras
+- El PDF incluye branding municipal, matriz QR local/offline de verificacion y codigo de barras
   visual del folio.
 
 ## Reportes
