@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pagos Municipales">
+  <rect width="512" height="512" rx="112" fill="#0F4C81"/>
+  <path d="M96 224h320v192H96z" fill="#ffffff"/>
+  <path d="M80 200 256 88l176 112H80z" fill="#B08D57"/>
+  <path d="M144 256h56v120h-56zm84 0h56v120h-56zm84 0h56v120h-56z" fill="#0F4C81"/>
+  <path d="M120 416h272" stroke="#B08D57" stroke-width="24" stroke-linecap="round"/>
+</svg>
